@@ -1,8 +1,11 @@
 # UniversAL 3D Audio Manager
  Script that automates enabling 3D audio in OpenAL and DirectSound3D games.  
-[Direct download](https://kutt.it/U3DAMDirectDownload)  (*Better compression for faster download*).
+[OpenAL & DirectSound3D games list](https://airtable.com/shrYxQRtC15KgpEo0/tblNOTdmp5nHXfFGU)  
+[Direct download](https://kutt.it/U3DAMDirectDownload)  (*Better compression for faster download*).  
 
-When running (as administrator), this script will:
+To enable 3D audio in [OpenAL games](https://airtable.com/shr1cvMcBqudWtjuP):  
+Right-click **UniversAL 3D Audio Manager.bat** > Run as administrator.  
+Then the script will:
 - Backup and/or (re)install OpenAL Soft.
 - Update OpenAL DLLs in the Windows folder.
 - Set default playback device's format to 24 bit, 48000hz.
@@ -11,7 +14,9 @@ When running (as administrator), this script will:
     - Windows spatial sound
     - HeSuVi
 
-When dragging and dropping a game (or program) executable (.exe that's usually in a folder with DLL files) into the .bat script, it will:
+To enable 3D audio in [DirectSound3D games](https://airtable.com/shrX9CnU32R6V1AHw):  
+Drag and drop a game (or program) executable (.exe that's usually in a folder with DLL files) into the .bat script.
+Then the script will:
 - Install OpenAL redistributable.
 - Backup and/or (re)install DSOAL using existing OpenAL Soft global settings.
 - Set default playback device's format to 24 bit, 48000hz.
