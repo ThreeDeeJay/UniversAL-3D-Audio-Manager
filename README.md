@@ -15,7 +15,7 @@ Then the script will:
     - HeSuVi
 
 To enable 3D audio in [DirectSound3D games](https://airtable.com/shrX9CnU32R6V1AHw):  
-Drag and drop a game (or program) executable (.exe that's usually in a folder with DLL files) into the .bat script.
+Drag and drop a game (or program) executable (.exe that's usually in a folder with DLL files) into the .bat script.  
 Then the script will:
 - Install OpenAL redistributable.
 - Backup and/or (re)install DSOAL using existing OpenAL Soft global settings.
