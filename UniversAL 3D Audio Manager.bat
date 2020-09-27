@@ -112,7 +112,7 @@ IF NOT EXIST %BackupPath% (
 				)
 			::Backup OpenAL folder
 			IF EXIST "%GamePath%\OpenAL" (
-				xcopy "%GamePath%\OpenAL\" "%BackupPath%\GameExeFolder\OpenAL\"  /s /y >>%LogFilePath%
+				xcopy "%GamePath%\OpenAL" "%BackupPath%\GameExeFolder\OpenAL\"  /s /y >>%LogFilePath%
 				rmdir /s /q "%GamePath%\OpenAL\"
 				)
 		echo Backup of DSOAL has been created!
@@ -121,15 +121,15 @@ IF NOT EXIST %BackupPath% (
 		echo Installing DSOAL into the game folder...
 			::Install HRTF folder
 			IF EXIST "%OpenALSoftHRTFFolder%" (
-				xcopy "%OpenALSoftHRTFFolder%\" "%GamePath%\OpenAL\HRTF\"  /s /y >>%LogFilePath%
+				xcopy "%OpenALSoftHRTFFolder%" "%GamePath%\OpenAL\HRTF\"  /s /y >>%LogFilePath%
 			) else (
-				xcopy "Resources\Common\OpenAL\HRTF\" "%GamePath%\OpenAL\HRTF\"  /s /y >>%LogFilePath%
+				xcopy "Resources\Common\OpenAL\HRTF" "%GamePath%\OpenAL\HRTF\"  /s /y >>%LogFilePath%
 			)
 			::Install presets folder
 			IF EXIST "%OpenALSoftPresetsFolder%" (
-				xcopy "%OpenALSoftPresetsFolder%\" "%GamePath%\OpenAL\presets\"  /s /y >>%LogFilePath%
+				xcopy "%OpenALSoftPresetsFolder%" "%GamePath%\OpenAL\presets\"  /s /y >>%LogFilePath%
 			) else (
-				xcopy "Resources\OpenALSoft\%OpenALSoftVersion%\APPDATA\OpenAL\presets\" "%GamePath%\OpenAL\presets\"  /s /y >>%LogFilePath%
+				xcopy "Resources\OpenALSoft\%OpenALSoftVersion%\APPDATA\OpenAL\presets" "%GamePath%\OpenAL\presets\"  /s /y >>%LogFilePath%
 			)
 			::Install dsound.dll
 			copy "Resources\DSOAL\%DSOALVersion%\GameExeFolder\dsound.dll" "%GamePath%\dsound.dll" >>%LogFilePath%
@@ -287,13 +287,13 @@ IF NOT EXIST %BackupPath% (
 	::Backup OpenAL Soft
 		::Backup HRTF folder
 		IF EXIST "%OpenALSoftHRTFFolder%" (
-			xcopy "%OpenALSoftHRTFFolder%\" "%BackupPath%\APPDATA\OpenAL\HRTF\"  /s /y >>%LogFilePath%
+			xcopy "%OpenALSoftHRTFFolder%" "%BackupPath%\APPDATA\OpenAL\HRTF\"  /s /y >>%LogFilePath%
 			rmdir /s /q "%OpenALSoftHRTFFolder%" >>%LogFilePath%
 			echo OpenAL Soft HRTF folder has been found. Moved to the Backup folder.
 		)
 		::Backup OpenAL folder
 		IF EXIST "%OpenALSoftInstallationFolder%" (
-			xcopy "%OpenALSoftInstallationFolder%\" "%BackupPath%\APPDATA\OpenAL\"  /s /y >>%LogFilePath%
+			xcopy "%OpenALSoftInstallationFolder%" "%BackupPath%\APPDATA\OpenAL\"  /s /y >>%LogFilePath%
 			rmdir /s /q "%OpenALSoftInstallationFolder%" >>%LogFilePath%
 			echo OpenAL Soft installation folder has been found. Moved to the Backup folder.
 			)
@@ -322,7 +322,7 @@ IF NOT EXIST %BackupPath% (
 	::Install OpenAL Soft
 	echo Installing OpenAL Soft %OpenALSoftVersion%...
 		::Install HRTF folder
-		xcopy "Resources\Common\OpenAL\HRTF\" "%OpenALSoftHRTFFolder%\" /s /y >>%LogFilePath%
+		xcopy "Resources\Common\OpenAL\HRTF" "%OpenALSoftHRTFFolder%\" /s /y >>%LogFilePath%
 		::Install alsoft.ini
 		copy "Resources\Common\alsoft.ini" "%OpenALSoftINIPath%" >>%LogFilePath%
 		IF "%OpenALSoftBranch%"=="WASAPI" (
@@ -353,7 +353,7 @@ IF NOT EXIST %BackupPath% (
 				move /y "%OpenALSoftINIPath%.temp" "%OpenALSoftINIPath%" >>%LogFilePath%
 			)
 		::Install OpenAL folder
-		xcopy "Resources\OpenALSoft\%OpenALSoftVersionBranch%\APPDATA\OpenAL\" "%APPDATA%\OpenAL\" /s /y >>%LogFilePath%
+		xcopy "Resources\OpenALSoft\%OpenALSoftVersionBranch%\APPDATA\OpenAL" "%APPDATA%\OpenAL\" /s /y >>%LogFilePath%
 		::Install OpenAL32.dll (32-bit)
 		copy "Resources\OpenALSoft\%OpenALSoftVersionBranch%\APPDATA\OpenAL\bin\Win32\soft_oal.dll" "%WINDIR%\%OpenALDLLx32Path%" >>%LogFilePath%
 		::Install OpenAL32.dll (64-bit)
