@@ -34,7 +34,7 @@ SET OpenALSoftDSOALBranch=DirectSound
 	SET DSOALSetupFolder=Resources\DSOAL\%DSOALVersion%
 	SET GamePath=%~d1%~p1
 	::General
-	SET ScriptVersion=1.2
+	SET ScriptVersion=1.3
 	SET CurrentDate=%date:~-4,4%-%date:~-10,2%-%date:~-7,2%_%time:~0,2%-%time:~3,2%
 	SET CurrentDate=%CurrentDate: =0%
 	SET BackupPath=UserFiles\Backup_%CurrentDate%
