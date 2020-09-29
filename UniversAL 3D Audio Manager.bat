@@ -437,7 +437,6 @@ exit
 ::Register dsound.dll
 :RegisterDSound
 echo Registering DirectSound references (dsound.dll)...
-::::start regedit /s "Resources\DirectSound\RegisterDLL.reg" >>%LogFilePath%
 	::Check reference 1/4
 	reg query HKEY_CURRENT_USER\SOFTWARE\Classes\CLSID\{47D4D946-62E8-11CF-93BC-444553540000}\InprocServer32 1> NUL 2>&1
 	if %errorlevel% equ 0 (
