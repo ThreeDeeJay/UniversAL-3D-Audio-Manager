@@ -34,13 +34,15 @@ SET OpenALSoftDSOALBranch=DirectSound
 	SET DSOALSetupFolder=Resources\DSOAL\%DSOALVersion%
 	SET GamePath=%~d1%~p1
 	::General
-	SET ScriptVersion=1.3
+	SET ScriptVersion=1.4
 	SET CurrentDate=%date:~-4,4%-%date:~-10,2%-%date:~-7,2%_%time:~0,2%-%time:~3,2%
 	SET CurrentDate=%CurrentDate: =0%
-	SET BackupPath=UserFiles\Backup_%CurrentDate%
-	SET LogFilePath=UserFiles\Log.txt
+	SET UserFilesFolder=UserFiles
+	SET BackupPath=%UserFilesFolder%\Backup\Backup_%CurrentDate%
+	SET LogFilePath=%UserFilesFolder%\Log.txt
 	::External
 	SET HeSuViPath="C:\Program Files\EqualizerAPO\config\HeSuVi\HeSuVi.exe"
+	SET ChatURL=https://kutt.it/U3DAMChat
 
 ::Create folder for log and backup
 IF NOT EXIST %BackupPath% (
@@ -57,49 +59,60 @@ echo -------------------------------------------------- %CurrentDate% ----------
 echo.>>%LogFilePath%
 
 ::DSOAL
-
 	::Drag and drop check
 	IF DEFINED GamePath (
 		::Check if selected DSOAL version and branch exists
 		IF NOT EXIST %DSOALSetupFolder% (
-			CALL :PrintAndLog "The folder for the selected DSOAL version and branch does not exist."
-			CALL :PrintAndLog "Please make sure that the variable DSOALVersion is set to the right value."
+			call :PrintAndLog "The folder for the selected DSOAL version and branch does not exist."
+			call :PrintAndLog "Please make sure that the variable DSOALVersion is set to the right value."
 			pause
 			exit
 		)
 
 		::Check if selected OpenAL Soft version and branch exists
 		IF NOT EXIST %OpenALSoftDSOALSetupFolder% (
-			CALL :PrintAndLog "The folder for the selected OpenAL Soft DSOAL version and branch does not exist."
-			CALL :PrintAndLog "Please make sure that the variables OpenALSoftDSOALVersion and OpenALSoftDSOALBranch are set to the right values."
+			call :PrintAndLog "The folder for the selected OpenAL Soft DSOAL version and branch does not exist."
+			call :PrintAndLog "Please make sure that the variables OpenALSoftDSOALVersion and OpenALSoftDSOALBranch are set to the right values."
 			pause
 			exit
 		)
 
 		::Info
-		CALL :PrintAndLog ":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::"
-		CALL :PrintAndLog ":::::::::::::::::::::::::: UniversAL 3D Audio Manager v%ScriptVersion% ::::::::::::::::::::::::::"
-		CALL :PrintAndLog ":::::::::::::::: By 3DJ - github.com/ThreeDeeJay / @Discord 3DJ#5426 ::::::::::::::::"
-		CALL :PrintAndLog "::::: Script that automates enabling 3D audio in OpenAL and DirectSound3D games :::::"
-		CALL :PrintAndLog "::::::::::::::::::::::: H E A D P H O N E S   R E Q U I R E D :::::::::::::::::::::::"
-		CALL :PrintAndLog ":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::"
-		CALL :PrintAndLog "- DSOAL version: %DSOALVersion%"
-		CALL :PrintAndLog "- OpenAL Soft version: %OpenALSoftDSOALVersionBranch%"
+		call :PrintAndLog ":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::"
+		call :PrintAndLog ":::::::::::::::::::::::::: UniversAL 3D Audio Manager v%ScriptVersion% ::::::::::::::::::::::::::"
+		call :PrintAndLog ":::::::::::::::: By 3DJ - github.com/ThreeDeeJay / @Discord 3DJ#5426 ::::::::::::::::"
+		call :PrintAndLog "::::: Script that automates enabling 3D audio in OpenAL and DirectSound3D games :::::"
+		call :PrintAndLog "::::::::::::::::::::::: H E A D P H O N E S   R E Q U I R E D :::::::::::::::::::::::"
+		call :PrintAndLog ":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::"
 		echo.
-		CALL :PrintAndLog "This script will:"
-		CALL :PrintAndLog "- Backup and/or (re)install DSOAL using existing OpenAL Soft global settings."
-		CALL :PrintAndLog "- Set default playback device's format to 24 bit, 48000hz."
-		CALL :PrintAndLog "- Disable (unless WASAPI is selected):"
-		CALL :PrintAndLog "    - Exclusive Mode"
-		CALL :PrintAndLog "    - Windows spatial sound"
-		CALL :PrintAndLog "    - HeSuVi"
-		CALL :PrintAndLog "- Fix DirectSound references in the registry."
+		call :PrintAndLog "- DSOAL version: %DSOALVersion%"
+		call :PrintAndLog "- OpenAL Soft version: %OpenALSoftDSOALVersionBranch%"
+		echo.
+		call :PrintAndLog "This script will:"
+		call :PrintAndLog "- Backup and/or (re)install DSOAL using existing OpenAL Soft global settings."
+		call :PrintAndLog "- Set default playback device's format to 24 bit, 48000hz."
+		IF NOT "%OpenALSoftDSOALBranch%"=="WASAPI" (
+			call :PrintAndLog "- Disable:"
+			call :PrintAndLog "    - Exclusive Mode"
+			call :PrintAndLog "    - Windows spatial sound"
+			call :PrintAndLog "    - HeSuVi"
+			) else (
+			call :PrintAndLog "- Enable:"
+			call :PrintAndLog "    - Exclusive Mode"
+			)
+		call :PrintAndLog "- Fix DirectSound references in the registry."
 		echo.
 		pause
 		cls
 
+		::Info
+		call :PrintAndLog ":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::"
+		call :PrintAndLog ":::::::::::::::::::::::::: UniversAL 3D Audio Manager v%ScriptVersion% ::::::::::::::::::::::::::"
+		call :PrintAndLog "::::::::::::::::::::::::::::::::::::::: DSOAL :::::::::::::::::::::::::::::::::::::::"
+		echo.
+
 		::Backup DSOAL
-		CALL :PrintAndLog "Creating DSOAL backup..."
+		call :PrintAndLog "Backing up DSOAL..."
 			::Create game backup folder
 			IF NOT EXIST %BackupPath%\GameExeFolder (
 				mkdir %BackupPath%\GameExeFolder
@@ -124,10 +137,11 @@ echo.>>%LogFilePath%
 				xcopy "%GamePath%\OpenAL" "%BackupPath%\GameExeFolder\OpenAL\"  /s /y >>%LogFilePath%
 				rmdir /s /q "%GamePath%\OpenAL\"
 				)
-		CALL :PrintAndLog "Backup of DSOAL has been created!"
+		call :PrintAndLog "DSOAL has been successfully backed up!"
+		echo.
 
 		::Install DSOAL
-		CALL :PrintAndLog "Installing DSOAL into the game folder..."
+		call :PrintAndLog "Installing DSOAL into the game folder..."
 			::Install HRTF folder
 			IF EXIST "%OpenALSoftHRTFFolder%" (
 				xcopy "%OpenALSoftHRTFFolder%" "%GamePath%\OpenAL\HRTF\"  /s /y >>%LogFilePath%
@@ -184,152 +198,155 @@ echo.>>%LogFilePath%
 				IF EXIST "%GamePath%\dsound.dll" (
 					IF EXIST "%GamePath%\dsoal-aldrv.dll" (
 						IF EXIST "%GamePath%\alsoft.ini" (
-							CALL :PrintAndLog "DSOAL %DSOALVersion% has been successfully installed!"
+							call :PrintAndLog "DSOAL %DSOALVersion% has been successfully installed!"
 							) else (
-								CALL :PrintAndLog "DSOAL %DSOALVersion% installation has failed!"
-								CALL :PrintAndLog "Please run the script again."
-								pause
-								exit
+								goto DSOALFailure
 							)
 						) else (
-							CALL :PrintAndLog "DSOAL %DSOALVersion% installation has failed!"
-							CALL :PrintAndLog "Please run the script again."
-							pause
-							exit
+							goto DSOALFailure
 						)
 					) else (
-						CALL :PrintAndLog "DSOAL %DSOALVersion% installation has failed!"
-						CALL :PrintAndLog "Please run the script again."
-						pause
-						exit
+						goto DSOALFailure
 					)
 				) else (
-					CALL :PrintAndLog "DSOAL %DSOALVersion% installation has failed!"
-					CALL :PrintAndLog "Please run the script again."
-					pause
-					exit
+					goto DSOALFailure
 				)
 			) else (
-				CALL :PrintAndLog "DSOAL %DSOALVersion% installation has failed!	"
-				CALL :PrintAndLog "Please run the script again."
-				pause
-				exit
+				goto DSOALFailure
 			)
 		echo.
 
-		goto DSOALCommands
+		call :RegisterDSound
+
+		call :AutoConfigGeneral
+		call :AutoConfigDSOAL
 
 		::Complete
 		:DSOALFinish
-		CALL :PrintAndLog ":::::::::::::::::::: Installation complete! ::::::::::::::::::::"
-		CALL :PrintAndLog "The selected game is now 3D audio-capable. "
-		CALL :PrintAndLog "Make sure to enable DirectSound3D/EAX/Hardware acceleration options in-game if necessary."
-		CALL :PrintAndLog "Also, remember to disable any other audio effects, except for headphones equalization if needed."
+		call :PrintAndLog ":::::::::::::::::::: Installation complete! ::::::::::::::::::::"
+		call :PrintAndLog "The selected game is now 3D audio-capable. "
+		call :PrintAndLog "Make sure to enable DirectSound3D/EAX/Hardware acceleration options in-game if necessary."
+		call :PrintAndLog "Also, remember to disable any other audio effects, except for headphones equalization if needed."
 		echo.
 		pause
 		exit
 		)
 
 ::OpenAL Soft
-
 	::Check for admin privileges
 	IF EXIST %SYSTEMROOT%\SYSTEM32\WDI\LOGFILES GOTO GOTADMIN
-	CALL :PrintAndLog "Please close this window then right click this .bat file and Run as administrator"
-	CALL :PrintAndLog "so the script can copy required files to the system."
+	call :PrintAndLog "Please close this window then right click this .bat file and Run as administrator"
+	call :PrintAndLog "so the script can copy required files to the system."
 	pause
 	exit
 	:GOTADMIN
 
 	::Check if selected OpenAL Soft version and branch exists
 	IF NOT EXIST %OpenALSoftSetupFolder% (
-		CALL :PrintAndLog "The folder for the selected OpenAL Soft version and branch does not exist."
-		CALL :PrintAndLog "Please make sure that the variables OpenALSoftVersion and OpenALSoftBranch are set to the right values."
+		call :PrintAndLog "The folder for the selected OpenAL Soft version and branch does not exist."
+		call :PrintAndLog "Please make sure that the variables OpenALSoftVersion and OpenALSoftBranch are set to the right values."
 		pause
 		exit
 	)
 
 	::Info
-	CALL :PrintAndLog ":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::"
-	CALL :PrintAndLog ":::::::::::::::::::::::::: UniversAL 3D Audio Manager v%ScriptVersion% ::::::::::::::::::::::::::"
-	CALL :PrintAndLog ":::::::::::::::: By 3DJ - github.com/ThreeDeeJay / @Discord 3DJ#5426 ::::::::::::::::"
-	CALL :PrintAndLog "::::: Script that automates enabling 3D audio in OpenAL and DirectSound3D games :::::"
-	CALL :PrintAndLog "::::::::::::::::::::::: H E A D P H O N E S   R E Q U I R E D :::::::::::::::::::::::"
-	CALL :PrintAndLog ":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::"
-	CALL :PrintAndLog "- OpenAL Soft version: %OpenALSoftVersionBranch%"
+	call :PrintAndLog ":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::"
+	call :PrintAndLog ":::::::::::::::::::::::::: UniversAL 3D Audio Manager v%ScriptVersion% ::::::::::::::::::::::::::"
+	call :PrintAndLog ":::::::::::::::: By 3DJ - github.com/ThreeDeeJay / @Discord 3DJ#5426 ::::::::::::::::"
+	call :PrintAndLog "::::: Script that automates enabling 3D audio in OpenAL and DirectSound3D games :::::"
+	call :PrintAndLog "::::::::::::::::::::::: H E A D P H O N E S   R E Q U I R E D :::::::::::::::::::::::"
+	call :PrintAndLog ":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::"
 	echo.
-	CALL :PrintAndLog "This script will:"
-	CALL :PrintAndLog "- Install OpenAL redistributable."
-	CALL :PrintAndLog "- Backup and/or (re)install OpenAL Soft."
-	CALL :PrintAndLog "- Update OpenAL DLLs in the Windows folder."
-	CALL :PrintAndLog "- Set default playback device's format to 24 bit, 48000hz."
-	CALL :PrintAndLog "- Disable (unless WASAPI is selected):"
-	CALL :PrintAndLog "    - Exclusive Mode"
-	CALL :PrintAndLog "    - Windows spatial sound"
-	CALL :PrintAndLog "    - HeSuVi"
+	call :PrintAndLog "- OpenAL Soft version: %OpenALSoftVersionBranch%"
+	echo.
+	call :PrintAndLog "This script will:"
+	call :PrintAndLog "- Install OpenAL redistributable."
+	call :PrintAndLog "- Backup and/or (re)install OpenAL Soft."
+	call :PrintAndLog "- Update OpenAL DLLs in the Windows folder."
+	call :PrintAndLog "- Set default playback device's format to 24 bit, 48000hz."
+	IF NOT "%OpenALSoftBranch%"=="WASAPI" (
+		call :PrintAndLog "- Disable:"
+		call :PrintAndLog "    - Exclusive Mode"
+		call :PrintAndLog "    - Windows spatial sound"
+		call :PrintAndLog "    - HeSuVi"
+		) else (
+			call :PrintAndLog "- Enable:"
+			call :PrintAndLog "    - Exclusive Mode"
+			)
 	echo.
 	pause
 	cls
+
+	::Info
+	call :PrintAndLog ":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::"
+	call :PrintAndLog ":::::::::::::::::::::::::: UniversAL 3D Audio Manager v%ScriptVersion% ::::::::::::::::::::::::::"
+	call :PrintAndLog ":::::::::::::::::::::::::::::::::::: OpenAL Soft ::::::::::::::::::::::::::::::::::::"
 	echo.
 
 	::Install OpenAL redistributable
-	CALL :PrintAndLog "Installing OpenAL..."
+	call :PrintAndLog "Installing OpenAL..."
 	Resources\OpenAL\Installer\oalinst.exe /SILENT >>%LogFilePath%
 	IF EXIST "%WINDIR%\%OpenALDLLx32Path%" (
 		IF EXIST "%WINDIR%\%OpenALDLLx64Path%" (
-			CALL :PrintAndLog "OpenAL has been successfully installed!"
+			call :PrintAndLog "OpenAL has been successfully installed!"
 			) else (
-			CALL :PrintAndLog "OpenAL installation has failed!"
-			CALL :PrintAndLog "Please run the script again as an administrator."
-			pause
-			exit
+			call :PrintAndLog "OpenAL installation has failed!"
+			goto OpenALSoftFailure
 			)
 		) else (
-		CALL :PrintAndLog "OpenAL installation has failed!"
-		CALL :PrintAndLog "Please run the script again as an administrator."
-		pause
-		exit
+		call :PrintAndLog "OpenAL installation has failed!"
+		goto OpenALSoftFailure
 		)
 	echo.
 	::Required by OpenAL Soft
 	::Source: https://openal.org/downloads/
 
 	::Backup OpenAL Soft
+	call :PrintAndLog "Backing up OpenAL Soft..."
 		::Backup HRTF folder
 		IF EXIST "%OpenALSoftHRTFFolder%" (
 			xcopy "%OpenALSoftHRTFFolder%" "%BackupPath%\APPDATA\OpenAL\HRTF\"  /s /y >>%LogFilePath%
 			rmdir /s /q "%OpenALSoftHRTFFolder%" >>%LogFilePath%
-			CALL :PrintAndLog "OpenAL Soft HRTF folder has been found. Moved to the Backup folder."
+			call :PrintAndLog "OpenAL Soft HRTF folder has been found. Moved to the Backup folder."
 		)
 		::Backup OpenAL folder
 		IF EXIST "%OpenALSoftInstallationFolder%" (
 			xcopy "%OpenALSoftInstallationFolder%" "%BackupPath%\APPDATA\OpenAL\"  /s /y >>%LogFilePath%
 			rmdir /s /q "%OpenALSoftInstallationFolder%" >>%LogFilePath%
-			CALL :PrintAndLog "OpenAL Soft installation folder has been found. Moved to the Backup folder."
+			call :PrintAndLog "OpenAL Soft installation folder has been found. Moved to the Backup folder."
 			)
 		::Backup alsoft.ini
 		IF EXIST "%OpenALSoftINIPath%" (
 			copy "%OpenALSoftINIPath%" "%BackupPath%\APPDATA\alsoft.ini" >>%LogFilePath%
 			del "%OpenALSoftINIPath%" >>%LogFilePath%
-			CALL :PrintAndLog "OpenAL Soft configuration file has been found. Moved to the Backup folder."
+			call :PrintAndLog "OpenAL Soft configuration file has been found. Moved to the Backup folder."
 			)
 		::Backup OpenAL32.dll (32-bit)
 		IF EXIST "%WINDIR%\%OpenALDLLx32Path%" (
 			mkdir "%BackupPath%\WINDIR\SysWOW64" >>%LogFilePath%
 			copy "%WINDIR%\%OpenALDLLx32Path%" "%BackupPath%\WINDIR\%OpenALDLLx32Path%" >>%LogFilePath%
 			del "%WINDIR%\%OpenALDLLx32Path%" >>%LogFilePath%
-			CALL :PrintAndLog "OpenAL 32-bit DLL file has been found. Moved to the Backup folder."
+			call :PrintAndLog "OpenAL 32-bit DLL file has been found. Moved to the Backup folder."
 			)
 		::Backup OpenAL32.dll (64-bit)
 		IF EXIST "%WINDIR%\%OpenALDLLx64Path%" (
 			mkdir "%BackupPath%\WINDIR\System32" >>%LogFilePath%
 			copy "%WINDIR%\%OpenALDLLx64Path%" "%BackupPath%\WINDIR\%OpenALDLLx64Path%" >>%LogFilePath%
 			del "%WINDIR%\%OpenALDLLx64Path%" >>%LogFilePath%
-			CALL :PrintAndLog "OpenAL 64-bit DLL file has been found. Moved to the Backup folder."
+			call :PrintAndLog "OpenAL 64-bit DLL file has been found. Moved to the Backup folder."
 			)
-		echo.
+
+	::Backup confirmation
+	IF EXIST "%BackupPath%" (
+		call :PrintAndLog "OpenAL Soft %OpenALSoftVersion% has been successfully backed up!"
+		) else (
+			call :PrintAndLog "OpenAL Soft %OpenALSoftVersion% backup has failed!"
+			goto OpenALSoftFailure
+		)
+	echo.
 
 	::Install OpenAL Soft
-	CALL :PrintAndLog "Installing OpenAL Soft %OpenALSoftVersion%..."
+	call :PrintAndLog "Installing OpenAL Soft %OpenALSoftVersion%..."
 		::Install HRTF folder
 		xcopy "Resources\Common\OpenAL\HRTF" "%OpenALSoftHRTFFolder%\" /s /y >>%LogFilePath%
 		::Install alsoft.ini
@@ -374,66 +391,37 @@ echo.>>%LogFilePath%
 			IF EXIST "%OpenALSoftINIPath%" (
 				IF EXIST "%WINDIR%\%OpenALDLLx32Path%" (
 					IF EXIST "%WINDIR%\%OpenALDLLx64Path%" (
-						CALL :PrintAndLog "OpenAL Soft %OpenALSoftVersion% has been successfully installed!"
+						call :PrintAndLog "OpenAL Soft %OpenALSoftVersion% has been successfully installed!"
 						) else (
-							CALL :PrintAndLog "OpenAL Soft %OpenALSoftVersion% installation has failed!"
-							CALL :PrintAndLog "Please run the script again as an administrator."
-							pause
-							exit
+							call :PrintAndLog "OpenAL Soft %OpenALSoftVersion% installation has failed!"
+							goto OpenALSoftFailure
 						)
 					) else (
-						CALL :PrintAndLog "OpenAL Soft %OpenALSoftVersion% installation has failed!"
-						CALL :PrintAndLog "Please run the script again as an administrator."
-						pause
-						exit
+						call :PrintAndLog "OpenAL Soft %OpenALSoftVersion% installation has failed!"
+						goto OpenALSoftFailure
 					)
 				) else (
-					CALL :PrintAndLog "OpenAL Soft %OpenALSoftVersion% installation has failed!"
-					CALL :PrintAndLog "Please run the script again as an administrator."
-					pause
-					exit
+					call :PrintAndLog "OpenAL Soft %OpenALSoftVersion% installation has failed!"
+					goto OpenALSoftFailure
 				)
 			) else (
-				CALL :PrintAndLog "OpenAL Soft %OpenALSoftVersion% installation has failed!"
-				CALL :PrintAndLog "Please run the script again as an administrator."
-				pause
-				exit
+				call :PrintAndLog "OpenAL Soft %OpenALSoftVersion% installation has failed!"
+				goto OpenALSoftFailure
 			)
 		) else (
-			CALL :PrintAndLog "OpenAL Soft %OpenALSoftVersion% installation has failed!	"
-			CALL :PrintAndLog "Please run the script again as an administrator."
-			pause
-			exit
+			call :PrintAndLog "OpenAL Soft %OpenALSoftVersion% installation has failed!	"
+			goto OpenALSoftFailure
 		)
 	echo.
 
-::Automatic configuration
-	::Get default playback device name
-	"Resources\Tools\SoundVolumeView\SoundVolumeView.exe" /scomma "UserFiles\AudioDevices.csv"
-	for /f "tokens=4 delims=," %%a in ('type "UserFiles\AudioDevices.csv" ^| find "Render,Render"') do set "DefaultPlaybackDevice=%%a"
-	::Set sample rate to 48khz and bit depth to 24 bit
-	"Resources\Tools\SoundVolumeView\SoundVolumeView.exe" /SetDefaultFormat "%DefaultPlaybackDevice%\Device\Speakers\Render" 24 48000
-	::Toggle exclusive mode depending on selected branch
-	IF "%OpenALSoftBranch%"=="WASAPI" (
-		"Resources\Tools\SoundVolumeView\SoundVolumeView.exe" /SetAllowExclusive "%DefaultPlaybackDevice%\Device\Speakers\Render" 1
-		"Resources\Tools\SoundVolumeView\SoundVolumeView.exe" /SetExclusivePriority "%DefaultPlaybackDevice%\Device\Speakers\Render" 1
-		) else (
-		"Resources\Tools\SoundVolumeView\SoundVolumeView.exe" /SetAllowExclusive "%DefaultPlaybackDevice%\Device\Speakers\Render" 0
-		"Resources\Tools\SoundVolumeView\SoundVolumeView.exe" /SetExclusivePriority "%DefaultPlaybackDevice%\Device\Speakers\Render" 0
-		)
-	::Deactivate other audio effects unless WASAPI was selected
-	IF NOT "%OpenALSoftBranch%"=="WASAPI" (
-		::Disable Windows spatial sound
-		"Resources\Tools\SoundVolumeView\SoundVolumeView.exe" /SetSpatial "%DefaultPlaybackDevice%\Device\Speakers\Render" ""
-		::Disable HeSuVi
-		IF EXIST %HeSuViPath% (
-			%HeSuViPath% -deactivateeverything 1
-			)
-		)
+call :AutoConfigGeneral
+call :AutoConfigOpenALSoft
+
+call :CleanupLog
 
 ::Complete
 echo :::::::::::::::::::: Installation complete! ::::::::::::::::::::
-echo Log and Backup folder are located in UserFiles\
+echo Log and Backup folder are located in %UserFilesFolder%\
 echo Also, remember to disable any other audio effects, except for headphones equalization if needed.
 echo Press any key to run the configuration tool in case you need to set your Preferred HRTF in the HRTF tab.
 echo Otherwise, close this window.
@@ -442,74 +430,155 @@ pause
 start %OpenALSoftInstallationFolder%\alsoft-config\alsoft-config.exe
 exit
 
-:DSOALCommands
+
+
+
+
 ::Register dsound.dll
+:RegisterDSound
 echo Registering DirectSound references (dsound.dll)...
 ::::start regedit /s "Resources\DirectSound\RegisterDLL.reg" >>%LogFilePath%
 	::Check reference 1/4
 	reg query HKEY_CURRENT_USER\SOFTWARE\Classes\CLSID\{47D4D946-62E8-11CF-93BC-444553540000}\InprocServer32 1> NUL 2>&1
 	if %errorlevel% equ 0 (
-	 	CALL :PrintAndLog "DirectSound interface reference 1/4 has been found in the registry."
+	 	call :PrintAndLog "DirectSound interface reference 1/4 has been found in the registry."
 	 	) else (
 	 	reg add HKEY_CURRENT_USER\SOFTWARE\Classes\CLSID\{47D4D946-62E8-11CF-93BC-444553540000}\InprocServer32 /t REG_SZ /d dsound.dll 1> NUL 2>&1
-	 	CALL :PrintAndLog "DirectSound interface reference 1/4 has been added to the registry."
+	 	call :PrintAndLog "DirectSound interface reference 1/4 has been added to the registry."
 	 	)
 	::Check reference 2/4
 	reg query HKEY_CURRENT_USER\SOFTWARE\Classes\CLSID\{3901CC3F-84B5-4FA4-BA35-AA8172B8A09B}\InprocServer32 1> NUL 2>&1
 	if %errorlevel% equ 0 (
-	 	CALL :PrintAndLog "DirectSound interface reference 2/4 has been found in the registry."
+	 	call :PrintAndLog "DirectSound interface reference 2/4 has been found in the registry."
 	 	) else (
 	 	reg add HKEY_CURRENT_USER\SOFTWARE\Classes\CLSID\{3901CC3F-84B5-4FA4-BA35-AA8172B8A09B}\InprocServer32 /t REG_SZ /d dsound.dll 1> NUL 2>&1
-	 	CALL :PrintAndLog "DirectSound interface reference 2/4 has been added to the registry."
+	 	call :PrintAndLog "DirectSound interface reference 2/4 has been added to the registry."
 	 	)
 	::Check reference 3/4
 	reg query HKEY_CURRENT_USER\SOFTWARE\Classes\Wow6432Node\CLSID\{47D4D946-62E8-11CF-93BC-444553540000}\InprocServer32 1> NUL 2>&1
 	if %errorlevel% equ 0 (
-	 	CALL :PrintAndLog "DirectSound interface reference 3/4 has been found in the registry."
+	 	call :PrintAndLog "DirectSound interface reference 3/4 has been found in the registry."
 	 	) else (
 	 	reg add HKEY_CURRENT_USER\SOFTWARE\Classes\Wow6432Node\CLSID\{47D4D946-62E8-11CF-93BC-444553540000}\InprocServer32 /t REG_SZ /d dsound.dll 1> NUL 2>&1
-	 	CALL :PrintAndLog "DirectSound interface reference 3/4 has been added to the registry."
+	 	call :PrintAndLog "DirectSound interface reference 3/4 has been added to the registry."
 	 	)
 	::Check reference 4/4
 	reg query HKEY_CURRENT_USER\SOFTWARE\Classes\Wow6432Node\CLSID\{3901CC3F-84B5-4FA4-BA35-AA8172B8A09B}\InprocServer32 1> NUL 2>&1
 	if %errorlevel% equ 0 (
-	 	CALL :PrintAndLog "DirectSound interface reference 4/4 has been found in the registry."
+	 	call :PrintAndLog "DirectSound interface reference 4/4 has been found in the registry."
 	 	) else (
 	 	reg add HKEY_CURRENT_USER\SOFTWARE\Classes\Wow6432Node\CLSID\{3901CC3F-84B5-4FA4-BA35-AA8172B8A09B}\InprocServer32 /t REG_SZ /d dsound.dll 1> NUL 2>&1
-	 	CALL :PrintAndLog "DirectSound interface reference 4/4 has been added to the registry."
+	 	call :PrintAndLog "DirectSound interface reference 4/4 has been added to the registry."
 	 	)
 echo.
 ::Required by DSOAL on Windows 8+ for games to load dsound.dll from their own folder.
 ::Source: https://www.indirectsound.com/registryIssues.html
+EXIT /B 0
 
-::Automatic configuration
+
+::Automatic configuration - General
+:AutoConfigGeneral
+call :PrintAndLog "Applying automatic configuration..."
 	::Get default playback device name
-	"Resources\Tools\SoundVolumeView\SoundVolumeView.exe" /scomma "UserFiles\AudioDevices.csv"
-	for /f "tokens=4 delims=," %%a in ('type "UserFiles\AudioDevices.csv" ^| find "Render,Render"') do set "DefaultPlaybackDevice=%%a"
+	"Resources\Tools\SoundVolumeView\SoundVolumeView.exe" /scomma "%UserFilesFolder%\AudioDevices.csv"
+	for /f "tokens=4 delims=," %%a in ('type "%UserFilesFolder%\AudioDevices.csv" ^| find "Render,Render"') do set "DefaultPlaybackDevice=%%a"
+	del "%UserFilesFolder%\AudioDevices.csv"
 	::Set sample rate to 48khz and bit depth to 24 bit
 	"Resources\Tools\SoundVolumeView\SoundVolumeView.exe" /SetDefaultFormat "%DefaultPlaybackDevice%\Device\Speakers\Render" 24 48000
+	call :PrintAndLog "Default playback device's format has been set to 24 bit, 48000hz."
+EXIT /B 0
+
+::Automatic configuration - DSOAL
+:AutoConfigDSOAL
 	::Toggle exclusive mode depending on selected branch
-	IF "%OpenALSoftBranch%"=="WASAPI" (
+	IF "%OpenALSoftDSOALBranch%"=="WASAPI" (
 		"Resources\Tools\SoundVolumeView\SoundVolumeView.exe" /SetAllowExclusive "%DefaultPlaybackDevice%\Device\Speakers\Render" 1
 		"Resources\Tools\SoundVolumeView\SoundVolumeView.exe" /SetExclusivePriority "%DefaultPlaybackDevice%\Device\Speakers\Render" 1
+		call :PrintAndLog "Exclusive mode has been enabled."
 		) else (
 		"Resources\Tools\SoundVolumeView\SoundVolumeView.exe" /SetAllowExclusive "%DefaultPlaybackDevice%\Device\Speakers\Render" 0
 		"Resources\Tools\SoundVolumeView\SoundVolumeView.exe" /SetExclusivePriority "%DefaultPlaybackDevice%\Device\Speakers\Render" 0
+		call :PrintAndLog "Exclusive mode has been disabled."
 		)
 	::Deactivate other audio effects unless WASAPI was selected
 	IF NOT "%OpenALSoftDSOALBranch%"=="WASAPI" (
 		::Disable Windows spatial sound
 		"Resources\Tools\SoundVolumeView\SoundVolumeView.exe" /SetSpatial "%DefaultPlaybackDevice%\Device\Speakers\Render" ""
+		call :PrintAndLog "Windows spatial sound has been disabled."
 		::Disable HeSuVi
 		IF EXIST %HeSuViPath% (
 			%HeSuViPath% -deactivateeverything 1
+			call :PrintAndLog "HeSuVi has been disabled."
 			)
 		)
+	echo.
+EXIT /B 0
+::Automatic configuration - OpenAL Soft
+:AutoConfigOpenALSoft
+	::Toggle exclusive mode depending on selected branch
+	IF "%OpenALSoftBranch%"=="WASAPI" (
+		"Resources\Tools\SoundVolumeView\SoundVolumeView.exe" /SetAllowExclusive "%DefaultPlaybackDevice%\Device\Speakers\Render" 1
+		"Resources\Tools\SoundVolumeView\SoundVolumeView.exe" /SetExclusivePriority "%DefaultPlaybackDevice%\Device\Speakers\Render" 1
+		call :PrintAndLog "Exclusive mode has been enabled."
+		) else (
+		"Resources\Tools\SoundVolumeView\SoundVolumeView.exe" /SetAllowExclusive "%DefaultPlaybackDevice%\Device\Speakers\Render" 0
+		"Resources\Tools\SoundVolumeView\SoundVolumeView.exe" /SetExclusivePriority "%DefaultPlaybackDevice%\Device\Speakers\Render" 0
+		call :PrintAndLog "Exclusive mode has been disabled."
+		)
+	::Deactivate other audio effects unless WASAPI was selected
+	IF NOT "%OpenALSoftBranch%"=="WASAPI" (
+		::Disable Windows spatial sound
+		"Resources\Tools\SoundVolumeView\SoundVolumeView.exe" /SetSpatial "%DefaultPlaybackDevice%\Device\Speakers\Render" ""
+		call :PrintAndLog "Windows spatial sound has been disabled."
+		::Disable HeSuVi
+		IF EXIST %HeSuViPath% (
+			%HeSuViPath% -deactivateeverything 1
+			call :PrintAndLog "HeSuVi has been disabled."
+			)
+		)
+	echo.
+EXIT /B 0
 
-goto DSOALFinish
+
+
+
+
+::Log cleanup
+:CleanupLog
+"Resources\Tools\FART\fart.exe" %LogFilePath% C:\Users\%USERNAME%\ C:\Users\USERNAME\ > NUL
+EXIT /B 0
+
 
 ::Print and log
 :PrintAndLog
 echo %~1
 echo %~1 >>%LogFilePath%
 EXIT /B 0
+
+
+::Log reporting
+:ReportLog
+call :CleanupLog
+call :PrintAndLog "If the issue persists, please report the Log from %UserFilesFolder%/ to our chat: %ChatURL%"
+call :PrintAndLog "Continue to the chat in your browser? Otherwise close this window."
+pause
+start %UserFilesFolder%
+start %ChatURL%
+exit
+
+
+::DSOAL failure
+:DSOALFailure
+call :PrintAndLog "DSOAL %DSOALVersion% installation has failed!"
+call :PrintAndLog "Please run the script again."
+call :ReportLog
+pause
+exit
+
+
+::OpenAL Soft failure
+:OpenALSoftFailure
+call :PrintAndLog "Please run the script again as an administrator."
+call :ReportLog
+pause
+exit
