@@ -38,7 +38,7 @@ SET OpenALSoftDSOALBranch=DirectSound
 	    SET "GameExeFilename=%%~nxA"
 	    )
 	::General
-	SET ScriptVersion=1.6
+	SET ScriptVersion=1.7
 	SET CurrentDate=%date:~-4,4%-%date:~-10,2%-%date:~-7,2%_%time:~0,2%-%time:~3,2%
 	SET CurrentDate=%CurrentDate: =0%
 	SET UserFilesFolder=UserFiles
@@ -48,8 +48,8 @@ SET OpenALSoftDSOALBranch=DirectSound
 	SET HeSuViPath="C:\Program Files\EqualizerAPO\config\HeSuVi\HeSuVi.exe"
 	SET ChatURL=https://kutt.it/U3DAMChat
 
-	::UI
-	title UniversAL 3D Audio Manager v%ScriptVersion%
+::Title bar
+title UniversAL 3D Audio Manager v%ScriptVersion%
 
 ::Create folder for log and backup
 IF NOT EXIST %BackupPath% (
@@ -66,9 +66,13 @@ echo -------------------------------------------------- %CurrentDate% ----------
 echo.>>%LogFilePath%
 
 ::DSOAL
+
 	::Check for .bat file drag and drop
 	IF DEFINED GameExeFolderPath (
+
+	::Install DSOAL
 	:InstallDSOAL
+
 		::Check if selected DSOAL version and branch exists
 		IF NOT EXIST %DSOALSetupFolder% (
 			call :PrintAndLog "[91mThe folder for the selected DSOAL version and branch does not exist.[0m"
@@ -113,142 +117,138 @@ echo.>>%LogFilePath%
 		title UniversAL 3D Audio Manager v%ScriptVersion% - Installing: DSOAL v%DSOALVersion% - OpenAL Soft v%OpenALSoftDSOALVersionBranch%
 		call :SplashInfoDSOALSmall
 
-		::DSOAL backup verification
-		IF EXIST "%GameExeFolderPath%OpenAL\HRTF" (
-			IF EXIST "%GameExeFolderPath%OpenAL\presets" (
-				IF EXIST "%GameExeFolderPath%dsound.dll" (
-					IF EXIST "%GameExeFolderPath%dsoal-aldrv.dll" (
-						IF EXIST "%GameExeFolderPath%alsoft.ini" (
-							call :PrintAndLog "Backing up existing DSOAL installation..."
-							) else (
+		::Check if DSOAL was properly installed
+			IF EXIST "%GameExeFolderPath%OpenAL\HRTF" (
+				IF EXIST "%GameExeFolderPath%OpenAL\presets" (
+					IF EXIST "%GameExeFolderPath%dsound.dll" (
+						IF EXIST "%GameExeFolderPath%dsoal-aldrv.dll" (
+							IF EXIST "%GameExeFolderPath%alsoft.ini" (
+								call :PrintAndLog "Backing up existing DSOAL installation..."
+								) else (
 								goto InstallDSOALFiles
+								)
+								)
+								)
+								)
+								)
+
+		::Backup DSOAL
+		:BackupDSOALFiles
+			IF NOT EXIST %BackupPath%\GameExeFolder (
+				mkdir %BackupPath%\GameExeFolder
+				)
+			::Backup dsound.dll
+			IF EXIST "%GameExeFolderPath%dsound.dll" (
+				copy "%GameExeFolderPath%dsound.dll" "%BackupPath%\GameExeFolder\dsound.dll" >>%LogFilePath%
+				del "%GameExeFolderPath%dsound.dll" >>%LogFilePath%
+				)
+			::Backup dsoal-aldrv.dll
+			IF EXIST "%GameExeFolderPath%dsoal-aldrv.dll" (
+				copy "%GameExeFolderPath%dsoal-aldrv.dll" "%BackupPath%\GameExeFolder\dsoal-aldrv.dll" >>%LogFilePath%
+				del "%GameExeFolderPath%dsoal-aldrv.dll" >>%LogFilePath%
+				)
+			::Backup alsoft.ini
+			IF EXIST "%GameExeFolderPath%alsoft.ini" (
+				copy "%GameExeFolderPath%alsoft.ini" "%BackupPath%\GameExeFolder\alsoft.ini" >>%LogFilePath%
+				del "%GameExeFolderPath%alsoft.ini" >>%LogFilePath%
+				)
+			::Backup OpenAL folder
+			IF EXIST "%GameExeFolderPath%OpenAL" (
+				xcopy "%GameExeFolderPath%OpenAL" "%BackupPath%\GameExeFolder\OpenAL\"  /s /y >>%LogFilePath%
+				rmdir /s /q "%GameExeFolderPath%OpenAL\"
+				)
+			::Check if DSOAL was backed up successfully
+			IF EXIST "%BackupPath%\GameExeFolder\dsound.dll" (
+				IF EXIST "%BackupPath%\GameExeFolder\dsoal-aldrv.dll" (
+					IF EXIST "%BackupPath%\GameExeFolder\alsoft.ini" (
+						IF EXIST "%BackupPath%\GameExeFolder\OpenAL\" (
+							call :PrintAndLog "[92mDSOAL has been successfully backed up![0m"
+							echo.
+							) else (
+							call :PrintAndLog "[91mDSOAL backup has failed![0m"
+							goto DSOALFailure
 							)
 						)
 					)
 				)
-			)
-		
-		::Create game backup folder
-		:BackupDSOALFiles
-		IF NOT EXIST %BackupPath%\GameExeFolder (
-			mkdir %BackupPath%\GameExeFolder
-			)
-		::Backup dsound.dll
-		IF EXIST "%GameExeFolderPath%dsound.dll" (
-			copy "%GameExeFolderPath%dsound.dll" "%BackupPath%\GameExeFolder\dsound.dll" >>%LogFilePath%
-			del "%GameExeFolderPath%dsound.dll" >>%LogFilePath%
-			)
-		::Backup dsoal-aldrv.dll
-		IF EXIST "%GameExeFolderPath%dsoal-aldrv.dll" (
-			copy "%GameExeFolderPath%dsoal-aldrv.dll" "%BackupPath%\GameExeFolder\dsoal-aldrv.dll" >>%LogFilePath%
-			del "%GameExeFolderPath%dsoal-aldrv.dll" >>%LogFilePath%
-			)
-		::Backup alsoft.ini
-		IF EXIST "%GameExeFolderPath%alsoft.ini" (
-			copy "%GameExeFolderPath%alsoft.ini" "%BackupPath%\GameExeFolder\alsoft.ini" >>%LogFilePath%
-			del "%GameExeFolderPath%alsoft.ini" >>%LogFilePath%
-			)
-		::Backup OpenAL folder
-		IF EXIST "%GameExeFolderPath%OpenAL" (
-			xcopy "%GameExeFolderPath%OpenAL" "%BackupPath%\GameExeFolder\OpenAL\"  /s /y >>%LogFilePath%
-			rmdir /s /q "%GameExeFolderPath%OpenAL\"
-			)
-
-		::Check if DSOAL was backed up successfully
-		IF EXIST "%BackupPath%\GameExeFolder\dsound.dll" (
-			IF EXIST "%BackupPath%\GameExeFolder\dsoal-aldrv.dll" (
-				IF EXIST "%BackupPath%\GameExeFolder\alsoft.ini" (
-					IF EXIST "%BackupPath%\GameExeFolder\OpenAL\" (
-						call :PrintAndLog "[92mDSOAL has been successfully backed up![0m"
-						echo.
-						) else (
-						call :PrintAndLog "[91mDSOAL backup has failed![0m"
-						goto DSOALFailure
-						)
-					)
-				)
-			)
-		
 		
 		::Install DSOAL
 		:InstallDSOALFiles
-		call :PrintAndLog "Installing DSOAL [1mv%DSOALVersion%[0m into the folder containing [1m%GameExeFilename%[0m..."
-			::Install HRTF folder
-			IF EXIST "%OpenALSoftHRTFFolder%" (
-				xcopy "%OpenALSoftHRTFFolder%" "%GameExeFolderPath%OpenAL\HRTF\"  /s /y >>%LogFilePath%
-			) else (
-				xcopy "Resources\Common\OpenAL\HRTF" "%GameExeFolderPath%OpenAL\HRTF\"  /s /y >>%LogFilePath%
-			)
-			::Install presets folder
-			IF EXIST "%OpenALSoftPresetsFolder%" (
-				xcopy "%OpenALSoftPresetsFolder%" "%GameExeFolderPath%OpenAL\presets\"  /s /y >>%LogFilePath%
-			) else (
-				xcopy "Resources\OpenALSoft\%OpenALSoftVersion%\APPDATA\OpenAL\presets" "%GameExeFolderPath%OpenAL\presets\"  /s /y >>%LogFilePath%
-			)
-			::Install dsound.dll
-			copy "Resources\DSOAL\%DSOALVersion%\GameExeFolder\dsound.dll" "%GameExeFolderPath%dsound.dll" >>%LogFilePath%
-			::Install dsoal-aldrv.dll
-			copy "Resources\OpenALSoft\%OpenALSoftDSOALVersionBranch%\APPDATA\OpenAL\bin\Win32\soft_oal.dll" "%GameExeFolderPath%dsoal-aldrv.dll" >>%LogFilePath%
-			::Install alsoft.ini
-			IF EXIST "%OpenALSoftINIPath%" (
-				copy "%OpenALSoftINIPath%" "%GameExeFolderPath%alsoft.ini" >>%LogFilePath%
+			call :PrintAndLog "Installing DSOAL [1mv%DSOALVersion%[0m into the folder containing [1m%GameExeFilename%[0m..."
+				::Install HRTF folder
+				IF EXIST "%OpenALSoftHRTFFolder%" (
+					xcopy "%OpenALSoftHRTFFolder%" "%GameExeFolderPath%OpenAL\HRTF\"  /s /y >>%LogFilePath%
 				) else (
-				copy "Resources\Common\alsoft.ini" "%GameExeFolderPath%alsoft.ini" >>%LogFilePath%
+					xcopy "Resources\Common\OpenAL\HRTF" "%GameExeFolderPath%OpenAL\HRTF\"  /s /y >>%LogFilePath%
 				)
-			IF "%OpenALSoftDSOALBranch%"=="WASAPI" (
-				::Period size
-				Resources\Tools\initool\initool.exe s "%GameExeFolderPath%alsoft.ini" General period_size 160 > "%GameExeFolderPath%alsoft.ini.temp"
-				move /y "%GameExeFolderPath%alsoft.ini.temp" "%GameExeFolderPath%alsoft.ini" >>%LogFilePath%
-				::Periods
-				Resources\Tools\initool\initool.exe s "%GameExeFolderPath%alsoft.ini" General periods 1 > "%GameExeFolderPath%alsoft.ini.temp"
-				move /y "%GameExeFolderPath%alsoft.ini.temp" "%GameExeFolderPath%alsoft.ini" >>%LogFilePath%
-				::Sample type
-				Resources\Tools\initool\initool.exe s "%GameExeFolderPath%alsoft.ini" General sample-type int16 > "%GameExeFolderPath%alsoft.ini.temp"
-				move /y "%GameExeFolderPath%alsoft.ini.temp" "%GameExeFolderPath%alsoft.ini" >>%LogFilePath%
-				::Drivers
-				Resources\Tools\initool\initool.exe s "%GameExeFolderPath%alsoft.ini" General drivers "wasapi," > "%GameExeFolderPath%alsoft.ini.temp"
-				move /y "%GameExeFolderPath%alsoft.ini.temp" "%GameExeFolderPath%alsoft.ini" >>%LogFilePath%
-			) else (
-				::Period size
-				Resources\Tools\initool\initool.exe s "%GameExeFolderPath%alsoft.ini" General period_size 1024 > "%GameExeFolderPath%alsoft.ini.temp"
-				move /y "%GameExeFolderPath%alsoft.ini.temp" "%GameExeFolderPath%alsoft.ini" >>%LogFilePath%
-				::Periods
-				Resources\Tools\initool\initool.exe s "%GameExeFolderPath%alsoft.ini" General periods 3 > "%GameExeFolderPath%alsoft.ini.temp"
-				move /y "%GameExeFolderPath%alsoft.ini.temp" "%GameExeFolderPath%alsoft.ini" >>%LogFilePath%
-				::Sample type
-				Resources\Tools\initool\initool.exe s "%GameExeFolderPath%alsoft.ini" General sample-type float32 > "%GameExeFolderPath%alsoft.ini.temp"
-				move /y "%GameExeFolderPath%alsoft.ini.temp" "%GameExeFolderPath%alsoft.ini" >>%LogFilePath%
-				::Drivers
-				Resources\Tools\initool\initool.exe s "%GameExeFolderPath%alsoft.ini" General drivers "-dsound," > "%GameExeFolderPath%alsoft.ini.temp"
-				move /y "%GameExeFolderPath%alsoft.ini.temp" "%GameExeFolderPath%alsoft.ini" >>%LogFilePath%
-			)
-
-		::Confirmation
-		IF EXIST "%GameExeFolderPath%OpenAL\HRTF" (
-			IF EXIST "%GameExeFolderPath%OpenAL\presets" (
-				IF EXIST "%GameExeFolderPath%dsound.dll" (
-					IF EXIST "%GameExeFolderPath%dsoal-aldrv.dll" (
-						IF EXIST "%GameExeFolderPath%alsoft.ini" (
-							call :PrintAndLog "[92mDSOAL v%DSOALVersion% has been successfully installed![0m"
-							) else (
-								goto DSOALFailure
-							)
-						) else (
-							goto DSOALFailure
-						)
+				::Install presets folder
+				IF EXIST "%OpenALSoftPresetsFolder%" (
+					xcopy "%OpenALSoftPresetsFolder%" "%GameExeFolderPath%OpenAL\presets\"  /s /y >>%LogFilePath%
+				) else (
+					xcopy "Resources\OpenALSoft\%OpenALSoftVersion%\APPDATA\OpenAL\presets" "%GameExeFolderPath%OpenAL\presets\"  /s /y >>%LogFilePath%
+				)
+				::Install dsound.dll
+				copy "Resources\DSOAL\%DSOALVersion%\GameExeFolder\dsound.dll" "%GameExeFolderPath%dsound.dll" >>%LogFilePath%
+				::Install dsoal-aldrv.dll
+				copy "Resources\OpenALSoft\%OpenALSoftDSOALVersionBranch%\APPDATA\OpenAL\bin\Win32\soft_oal.dll" "%GameExeFolderPath%dsoal-aldrv.dll" >>%LogFilePath%
+				::Install alsoft.ini
+				IF EXIST "%OpenALSoftINIPath%" (
+					copy "%OpenALSoftINIPath%" "%GameExeFolderPath%alsoft.ini" >>%LogFilePath%
 					) else (
-						goto DSOALFailure
+					copy "Resources\Common\alsoft.ini" "%GameExeFolderPath%alsoft.ini" >>%LogFilePath%
 					)
+				IF "%OpenALSoftDSOALBranch%"=="WASAPI" (
+					::Period size
+					Resources\Tools\initool\initool.exe s "%GameExeFolderPath%alsoft.ini" General period_size 160 > "%GameExeFolderPath%alsoft.ini.temp"
+					move /y "%GameExeFolderPath%alsoft.ini.temp" "%GameExeFolderPath%alsoft.ini" >>%LogFilePath%
+					::Periods
+					Resources\Tools\initool\initool.exe s "%GameExeFolderPath%alsoft.ini" General periods 1 > "%GameExeFolderPath%alsoft.ini.temp"
+					move /y "%GameExeFolderPath%alsoft.ini.temp" "%GameExeFolderPath%alsoft.ini" >>%LogFilePath%
+					::Sample type
+					Resources\Tools\initool\initool.exe s "%GameExeFolderPath%alsoft.ini" General sample-type int16 > "%GameExeFolderPath%alsoft.ini.temp"
+					move /y "%GameExeFolderPath%alsoft.ini.temp" "%GameExeFolderPath%alsoft.ini" >>%LogFilePath%
+					::Drivers
+					Resources\Tools\initool\initool.exe s "%GameExeFolderPath%alsoft.ini" General drivers "wasapi," > "%GameExeFolderPath%alsoft.ini.temp"
+					move /y "%GameExeFolderPath%alsoft.ini.temp" "%GameExeFolderPath%alsoft.ini" >>%LogFilePath%
 				) else (
-					goto DSOALFailure
+					::Period size
+					Resources\Tools\initool\initool.exe s "%GameExeFolderPath%alsoft.ini" General period_size 1024 > "%GameExeFolderPath%alsoft.ini.temp"
+					move /y "%GameExeFolderPath%alsoft.ini.temp" "%GameExeFolderPath%alsoft.ini" >>%LogFilePath%
+					::Periods
+					Resources\Tools\initool\initool.exe s "%GameExeFolderPath%alsoft.ini" General periods 3 > "%GameExeFolderPath%alsoft.ini.temp"
+					move /y "%GameExeFolderPath%alsoft.ini.temp" "%GameExeFolderPath%alsoft.ini" >>%LogFilePath%
+					::Sample type
+					Resources\Tools\initool\initool.exe s "%GameExeFolderPath%alsoft.ini" General sample-type float32 > "%GameExeFolderPath%alsoft.ini.temp"
+					move /y "%GameExeFolderPath%alsoft.ini.temp" "%GameExeFolderPath%alsoft.ini" >>%LogFilePath%
+					::Drivers
+					Resources\Tools\initool\initool.exe s "%GameExeFolderPath%alsoft.ini" General drivers "-dsound," > "%GameExeFolderPath%alsoft.ini.temp"
+					move /y "%GameExeFolderPath%alsoft.ini.temp" "%GameExeFolderPath%alsoft.ini" >>%LogFilePath%
 				)
-			) else (
-				goto DSOALFailure
-			)
-		echo.
+			::Check if DSOAL was installed successfully
+			IF EXIST "%GameExeFolderPath%OpenAL\HRTF" (
+				IF EXIST "%GameExeFolderPath%OpenAL\presets" (
+					IF EXIST "%GameExeFolderPath%dsound.dll" (
+						IF EXIST "%GameExeFolderPath%dsoal-aldrv.dll" (
+							IF EXIST "%GameExeFolderPath%alsoft.ini" (
+								call :PrintAndLog "[92mDSOAL v%DSOALVersion% has been successfully installed![0m"
+								) else (
+								goto DSOALFailure
+								)
+								) else (
+								goto DSOALFailure
+								)
+								) else (
+								goto DSOALFailure
+								)
+								) else (
+								goto DSOALFailure
+								)
+								) else (
+								goto DSOALFailure
+								)
+								echo.
 
 		call :RegisterDSound
-
 		call :AutoConfigGeneral
 		call :AutoConfigDSOAL
 
@@ -256,7 +256,7 @@ echo.>>%LogFilePath%
 		:DSOALFinish
 		call :PrintAndLog ":::::::::::::::::::: [92mDSOAL v%DSOALVersion% has been installed successfully![0m ::::::::::::::::::::"
 		call :Notes
-		call :PrintAndLog "[93mMake sure to enable DirectSound3D/EAX/Hardware acceleration options in-game if necessary.[0m"
+		call :PrintAndLog "[93m- Enable DirectSound3D/EAX/Hardware acceleration if the game has any of those audio options.[0m"
 		echo.
 		pause
 		exit
@@ -271,51 +271,54 @@ echo.>>%LogFilePath%
 				IF EXIST "%OpenALSoftINIPath%" (
 					IF EXIST "%WINDIR%\%OpenALDLLx32Path%" (
 						IF EXIST "%WINDIR%\%OpenALDLLx64Path%" (
-							call :PrintAndLog "[92mOpenAL Soft installation found! You can proceed to install DSOAL.[0m"
+								call :PrintAndLog "[92mOpenAL Soft installation found! You can proceed to install DSOAL.[0m"
 							) else (
 								::call :PrintAndLog "OpenAL Soft installation was not found or not properly installed! Please (re)install it before installing DSOAL."
 								call :PrintAndLog "[93mOpenAL Soft installation was not found or not properly installed! Please (re)install it before installing DSOAL.[0m"
 							)
-						) else (
-							::call :PrintAndLog "OpenAL Soft installation was not found or not properly installed! Please (re)install it before installing DSOAL."
+							) else (
+								::call :PrintAndLog "OpenAL Soft installation was not found or not properly installed! Please (re)install it before installing DSOAL."
 								call :PrintAndLog "[93mOpenAL Soft installation was not found or not properly installed! Please (re)install it before installing DSOAL.[0m"
-						)
-					) else (
-						::call :PrintAndLog "OpenAL Soft installation was not found or not properly installed! Please (re)install it before installing DSOAL."
+							)
+							) else (
+								::call :PrintAndLog "OpenAL Soft installation was not found or not properly installed! Please (re)install it before installing DSOAL."
 								call :PrintAndLog "[93mOpenAL Soft installation was not found or not properly installed! Please (re)install it before installing DSOAL.[0m"
-					)
-				) else (
-					::call :PrintAndLog "OpenAL Soft installation was not found or not properly installed! Please (re)install it before installing DSOAL."
+							)
+							) else (
+								::call :PrintAndLog "OpenAL Soft installation was not found or not properly installed! Please (re)install it before installing DSOAL."
 								call :PrintAndLog "[93mOpenAL Soft installation was not found or not properly installed! Please (re)install it before installing DSOAL.[0m"
-				)
-			) else (
-				::call :PrintAndLog "OpenAL Soft installation was not found or not properly installed! Please (re)install it before installing DSOAL."
+							)
+							) else (
+								::call :PrintAndLog "OpenAL Soft installation was not found or not properly installed! Please (re)install it before installing DSOAL."
 								call :PrintAndLog "[93mOpenAL Soft installation was not found or not properly installed! Please (re)install it before installing DSOAL.[0m"
-			)
-		echo.
+							)
+							echo.
+
 		::Info
 		call :PrintAndLog "To (re)install OpenAL Soft, close this window and right click this .bat file then run as administrator."
 		call :PrintAndLog "To (re)install DSOAL, drag and drop the game's .exe into this window to get its path then press Enter."
-		::Declare variable with placeholder value
-		set GameExeFullPath=Null
-		::Check for window drag and drop
-		set /p GameExeFullPath=
-		::Remove quotes
-		set GameExeFullPath=%GameExeFullPath:"=%
-		::Extract folder path and filename and save to separate variables
-		For %%A in ("%GameExeFullPath%") do (
-		    SET "GameExeFolderPath=%%~dpA"
-		    SET "GameExeFilename=%%~nxA"
-		    )
-		::Quit script if there was no user input
-		IF "%GameExeFullPath%"=="Null" (
-			exit
-			)
+		::Window exe drag and drop
+			::Declare variable with placeholder value
+			set GameExeFullPath=Null
+			::Check for window drag and drop
+			set /p GameExeFullPath=
+			::Remove quotes from path
+			set GameExeFullPath=%GameExeFullPath:"=%
+			::Extract folder path and filename and save to separate variables
+			For %%A in ("%GameExeFullPath%") do (
+			    SET "GameExeFolderPath=%%~dpA"
+			    SET "GameExeFilename=%%~nxA"
+			    )
+			::Quit script if there was no user input
+			IF "%GameExeFullPath%"=="Null" (
+				exit
+				)
 		::Proceed to install DSOAL
 		call :InstallDSOAL
 	:GOTADMIN
 
 ::OpenAL Soft
+
 	::Info
 	cls
 	call :SplashInfo
@@ -338,21 +341,19 @@ echo.>>%LogFilePath%
 	echo.
 	pause
 
-
-
-::Check if selected OpenAL Soft version and branch exists
-	IF NOT EXIST %OpenALSoftSetupFolder% (
-		call :PrintAndLog "The folder for the selected OpenAL Soft version and branch does not exist."
-		call :PrintAndLog "Please make sure that the variables OpenALSoftVersion and OpenALSoftBranch are set to the right values."
-		pause
-		exit
-	)
+	::Check if selected OpenAL Soft version and branch exists
+		IF NOT EXIST %OpenALSoftSetupFolder% (
+			call :PrintAndLog "The folder for the selected OpenAL Soft version and branch does not exist."
+			call :PrintAndLog "Please make sure that the variables OpenALSoftVersion and OpenALSoftBranch are set to the right values."
+			pause
+			exit
+		)
 
 	::Info
 	title UniversAL 3D Audio Manager v%ScriptVersion% - Installing: OpenAL Soft v%OpenALSoftVersionBranch%
 	call :SplashInfoOpenALSoftSmall
 
-	::OpenAL installation
+	::Install OpenAL
 	call :PrintAndLog "Installing OpenAL..."
 	Resources\OpenAL\Installer\oalinst.exe /SILENT >>%LogFilePath%
 	IF EXIST "%WINDIR%\%OpenALDLLx32Path%" (
@@ -370,7 +371,7 @@ echo.>>%LogFilePath%
 	::Required by OpenAL Soft
 	::Source: https://openal.org/downloads/
 
-	::OpenAL Soft backup
+	::Backup OpenAL Soft
 	call :PrintAndLog "Backing up existing OpenAL Soft..."
 		::Backup HRTF folder
 		IF EXIST "%OpenALSoftHRTFFolder%" (
@@ -399,8 +400,7 @@ echo.>>%LogFilePath%
 			copy "%WINDIR%\%OpenALDLLx64Path%" "%BackupPath%\WINDIR\%OpenALDLLx64Path%" >>%LogFilePath%
 			del "%WINDIR%\%OpenALDLLx64Path%" >>%LogFilePath%
 			)
-
-	::OpenAL Soft backup confirmation
+	::Verify OpenAL Soft backup
 	IF EXIST "%BackupPath%" (
 		call :PrintAndLog "[92mOpenAL Soft has been successfully backed up![0m"
 		) else (
@@ -409,38 +409,38 @@ echo.>>%LogFilePath%
 		)
 	echo.
 
-	::OpenAL Soft installation
+	::Install OpenAL Soft
 	call :PrintAndLog "Installing OpenAL Soft [1mv%OpenALSoftVersion%[0m..."
 		::Install HRTF folder
 		xcopy "Resources\Common\OpenAL\HRTF" "%OpenALSoftHRTFFolder%\" /s /y >>%LogFilePath%
 		::Install alsoft.ini
 		copy "Resources\Common\alsoft.ini" "%OpenALSoftINIPath%" >>%LogFilePath%
 		IF "%OpenALSoftBranch%"=="WASAPI" (
-				::Period size
-				Resources\Tools\initool\initool.exe s "%OpenALSoftINIPath%" General period_size 160 > "%OpenALSoftINIPath%.temp"
-				move /y "%OpenALSoftINIPath%.temp" "%OpenALSoftINIPath%" >>%LogFilePath%
-				::Periods
-				Resources\Tools\initool\initool.exe s "%OpenALSoftINIPath%" General periods 1 > "%OpenALSoftINIPath%.temp"
-				move /y "%OpenALSoftINIPath%.temp" "%OpenALSoftINIPath%" >>%LogFilePath%
-				::Sample type
-				Resources\Tools\initool\initool.exe s "%OpenALSoftINIPath%" General sample-type int16 > "%OpenALSoftINIPath%.temp"
-				move /y "%OpenALSoftINIPath%.temp" "%OpenALSoftINIPath%" >>%LogFilePath%
-				::Drivers
-				Resources\Tools\initool\initool.exe s "%OpenALSoftINIPath%" General drivers "wasapi," > "%OpenALSoftINIPath%.temp"
-				move /y "%OpenALSoftINIPath%.temp" "%OpenALSoftINIPath%" >>%LogFilePath%
-			) else (
-				::Period size
-				Resources\Tools\initool\initool.exe s "%OpenALSoftINIPath%" General period_size 1024 > "%OpenALSoftINIPath%.temp"
-				move /y "%OpenALSoftINIPath%.temp" "%OpenALSoftINIPath%" >>%LogFilePath%
-				::Periods
-				Resources\Tools\initool\initool.exe s "%OpenALSoftINIPath%" General periods 3 > "%OpenALSoftINIPath%.temp"
-				move /y "%OpenALSoftINIPath%.temp" "%OpenALSoftINIPath%" >>%LogFilePath%
-				::Sample type
-				Resources\Tools\initool\initool.exe s "%OpenALSoftINIPath%" General sample-type float32 > "%OpenALSoftINIPath%.temp"
-				move /y "%OpenALSoftINIPath%.temp" "%OpenALSoftINIPath%" >>%LogFilePath%
-				::Drivers
-				Resources\Tools\initool\initool.exe s "%OpenALSoftINIPath%" General drivers "-dsound," > "%OpenALSoftINIPath%.temp"
-				move /y "%OpenALSoftINIPath%.temp" "%OpenALSoftINIPath%" >>%LogFilePath%
+			::Period size
+			Resources\Tools\initool\initool.exe s "%OpenALSoftINIPath%" General period_size 160 > "%OpenALSoftINIPath%.temp"
+			move /y "%OpenALSoftINIPath%.temp" "%OpenALSoftINIPath%" >>%LogFilePath%
+			::Periods
+			Resources\Tools\initool\initool.exe s "%OpenALSoftINIPath%" General periods 1 > "%OpenALSoftINIPath%.temp"
+			move /y "%OpenALSoftINIPath%.temp" "%OpenALSoftINIPath%" >>%LogFilePath%
+			::Sample type
+			Resources\Tools\initool\initool.exe s "%OpenALSoftINIPath%" General sample-type int16 > "%OpenALSoftINIPath%.temp"
+			move /y "%OpenALSoftINIPath%.temp" "%OpenALSoftINIPath%" >>%LogFilePath%
+			::Drivers
+			Resources\Tools\initool\initool.exe s "%OpenALSoftINIPath%" General drivers "wasapi," > "%OpenALSoftINIPath%.temp"
+			move /y "%OpenALSoftINIPath%.temp" "%OpenALSoftINIPath%" >>%LogFilePath%
+		) else (
+			::Period size
+			Resources\Tools\initool\initool.exe s "%OpenALSoftINIPath%" General period_size 1024 > "%OpenALSoftINIPath%.temp"
+			move /y "%OpenALSoftINIPath%.temp" "%OpenALSoftINIPath%" >>%LogFilePath%
+			::Periods
+			Resources\Tools\initool\initool.exe s "%OpenALSoftINIPath%" General periods 3 > "%OpenALSoftINIPath%.temp"
+			move /y "%OpenALSoftINIPath%.temp" "%OpenALSoftINIPath%" >>%LogFilePath%
+			::Sample type
+			Resources\Tools\initool\initool.exe s "%OpenALSoftINIPath%" General sample-type float32 > "%OpenALSoftINIPath%.temp"
+			move /y "%OpenALSoftINIPath%.temp" "%OpenALSoftINIPath%" >>%LogFilePath%
+			::Drivers
+			Resources\Tools\initool\initool.exe s "%OpenALSoftINIPath%" General drivers "-dsound," > "%OpenALSoftINIPath%.temp"
+			move /y "%OpenALSoftINIPath%.temp" "%OpenALSoftINIPath%" >>%LogFilePath%
 			)
 		::Install OpenAL folder
 		xcopy "Resources\OpenALSoft\%OpenALSoftVersionBranch%\APPDATA\OpenAL" "%APPDATA%\OpenAL\" /s /y >>%LogFilePath%
@@ -448,39 +448,37 @@ echo.>>%LogFilePath%
 		copy "Resources\OpenALSoft\%OpenALSoftVersionBranch%\APPDATA\OpenAL\bin\Win32\soft_oal.dll" "%WINDIR%\%OpenALDLLx32Path%" >>%LogFilePath%
 		::Install OpenAL32.dll (64-bit)
 		copy "Resources\OpenALSoft\%OpenALSoftVersionBranch%\APPDATA\OpenAL\bin\Win64\soft_oal.dll" "%WINDIR%\%OpenALDLLx64Path%" >>%LogFilePath%
-
-	::OpenAL Soft installation confirmation
-	IF EXIST "%OpenALSoftInstallationFolder%" (
-		IF EXIST "%OpenALSoftHRTFFolder%" (
-			IF EXIST "%OpenALSoftINIPath%" (
-				IF EXIST "%WINDIR%\%OpenALDLLx32Path%" (
-					IF EXIST "%WINDIR%\%OpenALDLLx64Path%" (
-						call :PrintAndLog "[92mOpenAL Soft v%OpenALSoftVersion% has been successfully installed![0m"
-						) else (
+		::Verify OpenAL Soft installation
+		IF EXIST "%OpenALSoftInstallationFolder%" (
+			IF EXIST "%OpenALSoftHRTFFolder%" (
+				IF EXIST "%OpenALSoftINIPath%" (
+					IF EXIST "%WINDIR%\%OpenALDLLx32Path%" (
+						IF EXIST "%WINDIR%\%OpenALDLLx64Path%" (
+							call :PrintAndLog "[92mOpenAL Soft v%OpenALSoftVersion% has been successfully installed![0m"
+							) else (
 							call :PrintAndLog "[91mOpenAL Soft v%OpenALSoftVersion% installation has failed![0m"
 							goto OpenALSoftFailure
-						)
-					) else (
-						call :PrintAndLog "[91mOpenAL Soft v%OpenALSoftVersion% installation has failed![0m"
-						goto OpenALSoftFailure
-					)
-				) else (
-					call :PrintAndLog "[91mOpenAL Soft v%OpenALSoftVersion% installation has failed![0m"
-					goto OpenALSoftFailure
-				)
-			) else (
-				call :PrintAndLog "[91mOpenAL Soft v%OpenALSoftVersion% installation has failed![0m"
-				goto OpenALSoftFailure
-			)
-		) else (
-			call :PrintAndLog "[91mOpenAL Soft v%OpenALSoftVersion% installation has failed![0m"
-			goto OpenALSoftFailure
-		)
-	echo. 
+							)
+							) else (
+							call :PrintAndLog "[91mOpenAL Soft v%OpenALSoftVersion% installation has failed![0m"
+							goto OpenALSoftFailure
+							)
+							) else (
+							call :PrintAndLog "[91mOpenAL Soft v%OpenALSoftVersion% installation has failed![0m"
+							goto OpenALSoftFailure
+							)
+							) else (
+							call :PrintAndLog "[91mOpenAL Soft v%OpenALSoftVersion% installation has failed![0m"
+							goto OpenALSoftFailure
+							)
+							) else (
+							call :PrintAndLog "[91mOpenAL Soft v%OpenALSoftVersion% installation has failed![0m"
+							goto OpenALSoftFailure
+							)
+							echo. 
 
 call :AutoConfigGeneral
 call :AutoConfigOpenALSoft
-
 call :CleanupLog
 
 ::Complete
@@ -493,13 +491,20 @@ pause
 start %OpenALSoftInstallationFolder%\alsoft-config\alsoft-config.exe
 exit
 
-::Notes
+
+
+
+
+::-------------------------------------------------- FUNCTIONS --------------------------------------------------
+
+
 :Notes
 call :PrintAndLog "Notes:"
-call :PrintAndLog "[93m- Log is located in %UserFilesFolder%\[0m"
-call :PrintAndLog "[93m- Backup is located in %BackupPath%\[0m"
+call :PrintAndLog "[93m- Log is located in %LogFilePath%[0m"
+call :PrintAndLog "[93m- Backup is located in %BackupPath%[0m"
 call :PrintAndLog "[93m- Disable any other audio effects, except for headphones equalization if needed.[0m"
 EXIT /B 0
+
 
 :SplashInfoSmall
 cls
@@ -527,6 +532,7 @@ cls
 call :PrintAndLog "[90m::::::::::::::::::::::::::::::::::::[0m[42m OpenAL Soft [0m[90m::::::::::::::::::::::::::::::::::::[0m"
 echo.
 EXIT /B 0
+
 
 ::Register dsound.dll
 :RegisterDSound
@@ -564,9 +570,9 @@ echo Registering DirectSound references (dsound.dll)...
 	 	call :PrintAndLog "[93mDirectSound interface reference 4/4 has not been found. Added to the registry.[0m"
 	 	)
 echo.
+EXIT /B 0
 ::Required by DSOAL on Windows 8+ for games to load dsound.dll from their own folder.
 ::Source: https://www.indirectsound.com/registryIssues.html
-EXIT /B 0
 
 
 ::Automatic configuration - General
@@ -606,6 +612,7 @@ EXIT /B 0
 		)
 	echo.
 EXIT /B 0
+
 ::Automatic configuration - OpenAL Soft
 :AutoConfigOpenALSoft
 	::Toggle exclusive mode depending on selected branch
@@ -631,9 +638,6 @@ EXIT /B 0
 		)
 	echo.
 EXIT /B 0
-
-
-
 
 
 ::Log cleanup
