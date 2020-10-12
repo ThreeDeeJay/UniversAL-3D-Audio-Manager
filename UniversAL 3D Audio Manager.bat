@@ -1,18 +1,19 @@
 @echo off
+Setlocal EnableDelayedExpansion
 
 ::Reset working folder. Needed when running as administrator.
 pushd %~dp0
 
 ::Variables
 	::OpenAL Soft
-SET OpenALSoftVersion=1.20.1
-SET OpenALSoftBranch=DirectSound
+	SET OpenALSoftVersion=1.20.1
+	SET OpenALSoftBranch=DirectSound
 	IF "%OpenALSoftBranch%"=="WASAPI" (
 		SET OpenALSoftVersionBranch=%OpenALSoftVersion%-%OpenALSoftBranch%
 		) else (
 		SET OpenALSoftVersionBranch=%OpenALSoftVersion%
 		)
-	SET OpenALSoftSetupFolder=Resources\OpenALSoft\%OpenALSoftVersionBranch%
+	SET OpenALSoftDLL=Resources\OpenALSoft\%OpenALSoftVersionBranch%\APPDATA\OpenAL\bin\Win32\soft_oal.dll
 	SET OpenALSoftInstallationFolder=%APPDATA%\OpenAL
 	SET OpenALSoftHRTFFolder=%OpenALSoftInstallationFolder%\HRTF
 	SET OpenALSoftPresetsFolder=%OpenALSoftInstallationFolder%\presets
@@ -22,16 +23,16 @@ SET OpenALSoftBranch=DirectSound
 	SET OpenALDLLx32Path=SysWOW64\OpenAL32.dll
 	SET OpenALDLLx64Path=System32\OpenAL32.dll
 	::DSOAL
-SET DSOALVersion=1.31a
-SET OpenALSoftDSOALVersion=1.19.1
-SET OpenALSoftDSOALBranch=DirectSound
+	SET DSOALVersion=1.31a
+	SET OpenALSoftDSOALVersion=1.19.1
+	SET OpenALSoftDSOALBranch=DirectSound
 	IF "%OpenALSoftDSOALBranch%"=="WASAPI" (
 		SET OpenALSoftDSOALVersionBranch=%OpenALSoftDSOALVersion%-%OpenALSoftDSOALBranch%
 		) else (
 		SET OpenALSoftDSOALVersionBranch=%OpenALSoftDSOALVersion%
 		)
-	SET OpenALSoftDSOALSetupFolder=Resources\OpenALSoft\%OpenALSoftDSOALVersionBranch%
-	SET DSOALSetupFolder=Resources\DSOAL\%DSOALVersion%
+	SET OpenALSoftDSOALDLL=Resources\OpenALSoft\%OpenALSoftDSOALVersionBranch%\APPDATA\OpenAL\bin\Win32\soft_oal.dll
+	SET DSOALDLL=Resources\DSOAL\%DSOALVersion%\GameExeFolder\dsound.dll
 	SET GameExeFullPath=%~1
 	For %%A in ("%GameExeFullPath%") do (
 	    SET "GameExeFolderPath=%%~dpA"
@@ -73,30 +74,8 @@ echo.>>%LogFilePath%
 	::Install DSOAL
 	:InstallDSOAL
 
-		::Check if selected DSOAL version and branch exists
-		IF NOT EXIST %DSOALSetupFolder% (
-			call :PrintAndLog "[91mThe folder for the selected DSOAL version and branch does not exist.[0m"
-			call :PrintAndLog "[91mPlease make sure that the variable DSOALVersion is set to the right value.[0m"
-			pause
-			exit
-		)
-
-		::Check if selected OpenAL Soft version and branch exists
-		IF NOT EXIST %OpenALSoftDSOALSetupFolder% (
-			call :PrintAndLog "[91mThe folder for the selected OpenAL Soft DSOAL version and branch does not exist.[0m"
-			call :PrintAndLog "[91mPlease make sure that the variables OpenALSoftDSOALVersion and OpenALSoftDSOALBranch are set to the right values.[0m"
-			pause
-			exit
-		)
-
 		::Info
 		call :SplashInfo
-		call :PrintAndLog "- DSOAL version: [1m%DSOALVersion%[0m"
-		call :PrintAndLog "- OpenAL Soft version: [1m%OpenALSoftDSOALVersionBranch%[0m"
-		echo.
-		call :PrintAndLog "- Game folder: [1m%GameExeFolderPath%[0m"
-		call :PrintAndLog "- Game executable: [1m%GameExeFilename%[0m"
-		echo.
 		call :PrintAndLog "This script will:"
 		call :PrintAndLog "- Backup and/or (re)install DSOAL using existing OpenAL Soft global settings."
 		call :PrintAndLog "- Set default playback device's format to 24 bit, 48000hz."
@@ -111,8 +90,34 @@ echo.>>%LogFilePath%
 			)
 		call :PrintAndLog "- Fix DirectSound references in the registry."
 		echo.
-		pause
+		call :PrintAndLog "- Game folder: [1m%GameExeFolderPath%[0m"
+		call :PrintAndLog "- Game executable: [1m%GameExeFilename%[0m"
+		echo.
+		call :PrintAndLog "- DSOAL version: [1m%DSOALVersion%[0m"
+		call :PrintAndLog "- OpenAL Soft version: [1m%OpenALSoftDSOALVersionBranch%[0m"
+		echo.
 
+		::Go to version selection when selecting N. Otherwise, proceed with installation by pressing Y
+		set MenuOption=NULL
+		CHOICE /M "Proceed with selected versions?"
+		IF !ERRORLEVEL!==2 (call :SelectDSOALOpenALSoftVersion)
+
+		::Check if selected DSOAL version and branch exists
+		IF NOT EXIST !DSOALDLL! (
+			cls
+			call :PrintAndLog "[91mThe DSOAL DLL (%DSOALDLL%) does not exist.[0m"
+			goto :SelectDSOALVersionList
+			exit
+		)
+
+		::Check if selected OpenAL Soft version and branch exists
+		IF NOT EXIST !OpenALSoftDSOALDLL! (
+			cls
+			call :PrintAndLog "[91mThe OpenAL Soft DLL (%OpenALSoftDSOALDLL%) does not exist.[0m"
+			goto :SelectDSOALOpenALSoftVersionList
+			exit
+		)
+		
 		::Info
 		title UniversAL 3D Audio Manager v%ScriptVersion% - Installing: DSOAL v%DSOALVersion% - OpenAL Soft v%OpenALSoftDSOALVersionBranch%
 		call :SplashInfoDSOALSmall
@@ -162,10 +167,10 @@ echo.>>%LogFilePath%
 				IF EXIST "%BackupPath%\GameExeFolder\dsoal-aldrv.dll" (
 					IF EXIST "%BackupPath%\GameExeFolder\alsoft.ini" (
 						IF EXIST "%BackupPath%\GameExeFolder\OpenAL\" (
-							call :PrintAndLog "[92mDSOAL has been successfully backed up![0m"
+							call :PrintAndLog "[92mDSOAL has been successfully backed up.[0m"
 							echo.
 							) else (
-							call :PrintAndLog "[91mDSOAL backup has failed![0m"
+							call :PrintAndLog "[91mDSOAL backup has failed.[0m"
 							goto DSOALFailure
 							)
 						)
@@ -230,7 +235,7 @@ echo.>>%LogFilePath%
 					IF EXIST "%GameExeFolderPath%dsound.dll" (
 						IF EXIST "%GameExeFolderPath%dsoal-aldrv.dll" (
 							IF EXIST "%GameExeFolderPath%alsoft.ini" (
-								call :PrintAndLog "[92mDSOAL v%DSOALVersion% has been successfully installed![0m"
+								call :PrintAndLog "[92mDSOAL v%DSOALVersion% has been successfully installed.[0m"
 								) else (
 								goto DSOALFailure
 								)
@@ -254,7 +259,7 @@ echo.>>%LogFilePath%
 
 		::Complete
 		:DSOALFinish
-		call :PrintAndLog ":::::::::::::::::::: [92mDSOAL v%DSOALVersion% has been installed successfully![0m ::::::::::::::::::::"
+		call :PrintAndLog "[90m::::::::::::::::::::[0m [92mDSOAL v%DSOALVersion% has been installed successfully[0m [90m::::::::::::::::::::[0m"
 		call :Notes
 		call :PrintAndLog "[93m- Enable DirectSound3D/EAX/Hardware acceleration if the game has any of those audio options.[0m"
 		echo.
@@ -271,26 +276,21 @@ echo.>>%LogFilePath%
 				IF EXIST "%OpenALSoftINIPath%" (
 					IF EXIST "%WINDIR%\%OpenALDLLx32Path%" (
 						IF EXIST "%WINDIR%\%OpenALDLLx64Path%" (
-								call :PrintAndLog "[92mOpenAL Soft installation found! You can proceed to install DSOAL.[0m"
+								call :PrintAndLog "[92mOpenAL Soft installation found. You can proceed to install DSOAL.[0m"
 							) else (
-								::call :PrintAndLog "OpenAL Soft installation was not found or not properly installed! Please (re)install it before installing DSOAL."
-								call :PrintAndLog "[93mOpenAL Soft installation was not found or not properly installed! Please (re)install it before installing DSOAL.[0m"
+								call :PrintAndLog "[93mOpenAL Soft installation was not found or not properly installed. Please (re)install it before installing DSOAL.[0m"
 							)
 							) else (
-								::call :PrintAndLog "OpenAL Soft installation was not found or not properly installed! Please (re)install it before installing DSOAL."
-								call :PrintAndLog "[93mOpenAL Soft installation was not found or not properly installed! Please (re)install it before installing DSOAL.[0m"
+								call :PrintAndLog "[93mOpenAL Soft installation was not found or not properly installed. Please (re)install it before installing DSOAL.[0m"
 							)
 							) else (
-								::call :PrintAndLog "OpenAL Soft installation was not found or not properly installed! Please (re)install it before installing DSOAL."
-								call :PrintAndLog "[93mOpenAL Soft installation was not found or not properly installed! Please (re)install it before installing DSOAL.[0m"
+								call :PrintAndLog "[93mOpenAL Soft installation was not found or not properly installed. Please (re)install it before installing DSOAL.[0m"
 							)
 							) else (
-								::call :PrintAndLog "OpenAL Soft installation was not found or not properly installed! Please (re)install it before installing DSOAL."
-								call :PrintAndLog "[93mOpenAL Soft installation was not found or not properly installed! Please (re)install it before installing DSOAL.[0m"
+								call :PrintAndLog "[93mOpenAL Soft installation was not found or not properly installed. Please (re)install it before installing DSOAL.[0m"
 							)
 							) else (
-								::call :PrintAndLog "OpenAL Soft installation was not found or not properly installed! Please (re)install it before installing DSOAL."
-								call :PrintAndLog "[93mOpenAL Soft installation was not found or not properly installed! Please (re)install it before installing DSOAL.[0m"
+								call :PrintAndLog "[93mOpenAL Soft installation was not found or not properly installed. Please (re)install it before installing DSOAL.[0m"
 							)
 							echo.
 
@@ -318,12 +318,11 @@ echo.>>%LogFilePath%
 	:GOTADMIN
 
 ::OpenAL Soft
-
+:InstallOpenALSoft
+	
 	::Info
 	cls
 	call :SplashInfo
-	call :PrintAndLog "- OpenAL Soft version: [1mv%OpenALSoftVersionBranch%[0m"
-	echo.
 	call :PrintAndLog "This script will:"
 	call :PrintAndLog "- Install OpenAL redistributable."
 	call :PrintAndLog "- Backup and/or (re)install OpenAL Soft."
@@ -339,15 +338,21 @@ echo.>>%LogFilePath%
 		call :PrintAndLog "    - Exclusive Mode"
 		)
 	echo.
-	pause
+	call :PrintAndLog "- OpenAL Soft version: [1mv%OpenALSoftVersionBranch%[0m"
+	echo.
+
+	::Go to version selection when selecting N. Otherwise, proceed with installation by pressing Y
+		set MenuOption=NULL
+		CHOICE /M "Proceed with selected version?"
+		IF !ERRORLEVEL!==2 (call :SelectOpenALSoftVersion)
 
 	::Check if selected OpenAL Soft version and branch exists
-		IF NOT EXIST %OpenALSoftSetupFolder% (
-			call :PrintAndLog "The folder for the selected OpenAL Soft version and branch does not exist."
-			call :PrintAndLog "Please make sure that the variables OpenALSoftVersion and OpenALSoftBranch are set to the right values."
-			pause
-			exit
-		)
+	IF NOT EXIST !OpenALSoftDLL! (
+		cls
+		call :PrintAndLog "[91mThe OpenAL Soft DLL (%OpenALSoftDLL%) does not exist.[0m"
+		goto :SelectOpenALSoftVersionList
+		exit
+	)
 
 	::Info
 	title UniversAL 3D Audio Manager v%ScriptVersion% - Installing: OpenAL Soft v%OpenALSoftVersionBranch%
@@ -358,13 +363,13 @@ echo.>>%LogFilePath%
 	Resources\OpenAL\Installer\oalinst.exe /SILENT >>%LogFilePath%
 	IF EXIST "%WINDIR%\%OpenALDLLx32Path%" (
 		IF EXIST "%WINDIR%\%OpenALDLLx64Path%" (
-			call :PrintAndLog "[92mOpenAL has been successfully installed![0m"
+			call :PrintAndLog "[92mOpenAL has been successfully installed.[0m"
 			) else (
-			call :PrintAndLog "[91mOpenAL installation has failed![0m"
+			call :PrintAndLog "[91mOpenAL installation has failed.[0m"
 			goto OpenALSoftFailure
 			)
 		) else (
-		call :PrintAndLog "[91mOpenAL installation has failed![0m"
+		call :PrintAndLog "[91mOpenAL installation has failed.[0m"
 		goto OpenALSoftFailure
 		)
 	echo.
@@ -402,15 +407,15 @@ echo.>>%LogFilePath%
 			)
 	::Verify OpenAL Soft backup
 	IF EXIST "%BackupPath%" (
-		call :PrintAndLog "[92mOpenAL Soft has been successfully backed up![0m"
+		call :PrintAndLog "[92mOpenAL Soft has been successfully backed up.[0m"
 		) else (
-			call :PrintAndLog "[91mOpenAL Soft backup has failed![0m"
+			call :PrintAndLog "[91mOpenAL Soft backup has failed.[0m"
 			goto OpenALSoftFailure
 		)
 	echo.
 
 	::Install OpenAL Soft
-	call :PrintAndLog "Installing OpenAL Soft [1mv%OpenALSoftVersion%[0m..."
+	call :PrintAndLog "Installing OpenAL Soft [1mv%OpenALSoftVersionBranch%[0m..."
 		::Install HRTF folder
 		xcopy "Resources\Common\OpenAL\HRTF" "%OpenALSoftHRTFFolder%\" /s /y >>%LogFilePath%
 		::Install alsoft.ini
@@ -453,42 +458,46 @@ echo.>>%LogFilePath%
 			IF EXIST "%OpenALSoftHRTFFolder%" (
 				IF EXIST "%OpenALSoftINIPath%" (
 					IF EXIST "%WINDIR%\%OpenALDLLx32Path%" (
-						IF EXIST "%WINDIR%\%OpenALDLLx64Path%" (
-							call :PrintAndLog "[92mOpenAL Soft v%OpenALSoftVersion% has been successfully installed![0m"
+							call :PrintAndLog "[92mOpenAL Soft v%OpenALSoftVersionBranch% has been successfully installed.[0m"
 							) else (
-							call :PrintAndLog "[91mOpenAL Soft v%OpenALSoftVersion% installation has failed![0m"
+							call :PrintAndLog "[91mOpenAL Soft v%OpenALSoftVersionBranch% installation has failed.[0m"
+							call :PrintAndLog "[91m%WINDIR%\%OpenALDLLx32Path% does not exist.[0m"
 							goto OpenALSoftFailure
 							)
 							) else (
-							call :PrintAndLog "[91mOpenAL Soft v%OpenALSoftVersion% installation has failed![0m"
+							call :PrintAndLog "[91mOpenAL Soft v%OpenALSoftVersionBranch% installation has failed.[0m"
+							call :PrintAndLog "[91m%OpenALSoftINIPath% does not exist.[0m"
 							goto OpenALSoftFailure
 							)
 							) else (
-							call :PrintAndLog "[91mOpenAL Soft v%OpenALSoftVersion% installation has failed![0m"
+							call :PrintAndLog "[91mOpenAL Soft v%OpenALSoftVersionBranch% installation has failed.[0m"
+							call :PrintAndLog "[91m%OpenALSoftHRTFFolder% does not exist.[0m"
 							goto OpenALSoftFailure
 							)
 							) else (
-							call :PrintAndLog "[91mOpenAL Soft v%OpenALSoftVersion% installation has failed![0m"
+							call :PrintAndLog "[91mOpenAL Soft v%OpenALSoftVersionBranch% installation has failed.[0m"
+							call :PrintAndLog "[91m%OpenALSoftInstallationFolder% does not exist.[0m"
 							goto OpenALSoftFailure
 							)
-							) else (
-							call :PrintAndLog "[91mOpenAL Soft v%OpenALSoftVersion% installation has failed![0m"
-							goto OpenALSoftFailure
-							)
-							echo. 
+							echo.
 
 call :AutoConfigGeneral
 call :AutoConfigOpenALSoft
 call :CleanupLog
 
 ::Complete
-call :PrintAndLog ":::::::::::::::::::: [92mOpenAL Soft v%OpenALSoftVersion% has been installed successfully![0m ::::::::::::::::::::"
+call :PrintAndLog ":::::::::::::::::::: [92mOpenAL Soft v%OpenALSoftVersionBranch% has been installed successfully.[0m ::::::::::::::::::::"
 call :Notes
-call :PrintAndLog "Press any key to run the configuration tool in case you need to set your Preferred HRTF in the HRTF tab."
-call :PrintAndLog "Otherwise, close this window."
-echo.
+
+if exist %OpenALSoftInstallationFolder%\alsoft-config\alsoft-config.exe (
+	call :PrintAndLog "Press any key to run the configuration tool in case you need to set your Preferred HRTF in the HRTF tab."
+	call :PrintAndLog "Otherwise, close this window."
+	echo.
+	pause
+	start %OpenALSoftInstallationFolder%\alsoft-config\alsoft-config.exe
+	exit
+	)
 pause
-start %OpenALSoftInstallationFolder%\alsoft-config\alsoft-config.exe
 exit
 
 
@@ -499,7 +508,7 @@ exit
 
 
 :Notes
-call :PrintAndLog "Notes:"
+call :PrintAndLog "[0mNotes:[0m"
 call :PrintAndLog "[93m- Log is located in %LogFilePath%[0m"
 call :PrintAndLog "[93m- Backup is located in %BackupPath%[0m"
 call :PrintAndLog "[93m- Disable any other audio effects, except for headphones equalization if needed.[0m"
@@ -531,6 +540,122 @@ EXIT /B 0
 cls
 call :PrintAndLog "[90m::::::::::::::::::::::::::::::::::::[0m[42m OpenAL Soft [0m[90m::::::::::::::::::::::::::::::::::::[0m"
 echo.
+EXIT /B 0
+
+
+::Wrapper version selection
+	::Select DSOAL version
+	:SelectDSOALOpenALSoftVersion
+		cls
+		call :PrintAndLog "Currently selected DSOAL version: [1m!DSOALVersion![0m"
+		::Version folder selection
+		:SelectDSOALVersionList
+			set count=0
+			cd Resources\DSOAL
+			for /d %%x in (*) do (
+			  set /a count=count+1
+			  set choice[!count!]=%%x
+			)
+			pushd %~dp0
+			echo To change, select a different version's number then press Enter.
+			echo.
+			::Print list of versions/folders
+			for /l %%x in (1,1,!count!) do (
+			   if %%x LEQ 9 (
+					echo  %%x] !choice[%%x]!
+				) else (
+					echo %%x] !choice[%%x]!
+				)
+			)
+			echo.
+			::Prompt user selection
+			set /p DSOALVersionSelect=?
+			echo.
+		::Update DSOAL OpenAL Soft version
+		set DSOALVersion=!choice[%DSOALVersionSelect%]!
+		SET OpenALSoftDSOALDLL=Resources\OpenALSoft\%OpenALSoftDSOALVersionBranch%\APPDATA\OpenAL\bin\Win32\soft_oal.dll
+		::Select OpenAL Soft version
+			cls
+			call :PrintAndLog "Currently selected OpenAL Soft version: [1m!OpenALSoftDSOALVersionBranch![0m"
+			::Version folder selection
+			:SelectDSOALOpenALSoftVersionList
+				set count=0
+				cd Resources\OpenALSoft
+				for /d %%x in (*) do (
+				  set /a count=count+1
+				  set choice[!count!]=%%x
+				)
+				pushd %~dp0
+				echo To change, select a different version's number then press Enter.
+				echo.
+				::Print list of versions/folders
+				for /l %%x in (1,1,!count!) do (
+				   if %%x LEQ 9 (
+						echo  %%x] !choice[%%x]!
+					) else (
+						echo %%x] !choice[%%x]!
+					)
+				)
+				echo.
+				::Prompt user selection
+				set /p OpenALSoftDSOALVersionSelect=?
+				echo.
+			::Update DSOAL OpenAL Soft
+			set OpenALSoftDSOALVersionBranch=!choice[%OpenALSoftDSOALVersionSelect%]!
+			::Update branch
+			echo/%OpenALSoftDSOALVersionBranch%|find "WASAPI" >nul
+			if !errorlevel! == 0 (
+				SET OpenALSoftDSOALVersion=!OpenALSoftDSOALVersionBranch:-WASAPI=!
+				SET OpenALSoftDSOALBranch%=WASAPI
+				) else (
+				SET OpenALSoftDSOALBranch=!OpenALSoftDSOALVersionBranch!
+				SET OpenALSoftBranch%=DirectSound
+				)
+				SET OpenALSoftDSOALDLL=Resources\OpenALSoft\%OpenALSoftDSOALVersionBranch%\APPDATA\OpenAL\bin\Win32\soft_oal.dll
+			SET DSOALDLL=Resources\DSOAL\%DSOALVersion%\GameExeFolder\dsound.dll
+			goto :InstallDSOAL
+EXIT /B 0
+
+	::Select OpenAL Soft version
+	:SelectOpenALSoftVersion
+		cls
+		call :PrintAndLog "Currently selected OpenAL Soft version: [1m!OpenALSoftVersionBranch![0m"
+		::Version folder selection
+		:SelectOpenALSoftVersionList
+			set count=0
+			cd Resources\OpenALSoft
+			for /d %%x in (*) do (
+			  set /a count=count+1
+			  set choice[!count!]=%%x
+			)
+			pushd %~dp0
+			echo To change, select a different version's number then press Enter.
+			echo.
+			::Print list of versions/folders
+			for /l %%x in (1,1,!count!) do (
+			   if %%x LEQ 9 (
+					echo  %%x] !choice[%%x]!
+				) else (
+					echo %%x] !choice[%%x]!
+				)
+			)
+			echo.
+			::Prompt user selection
+			set /p OpenALSoftVersionSelect=?
+			echo.
+		::Update OpenAL Soft
+		set OpenALSoftVersionBranch=!choice[%OpenALSoftVersionSelect%]!
+		::Update branch
+		echo/%OpenALSoftVersionBranch%|find "WASAPI" >nul
+		if !errorlevel! == 0 (
+			SET OpenALSoftVersion=!OpenALSoftVersionBranch:-WASAPI=!
+			SET OpenALSoftBranch%=WASAPI
+			SET OpenALSoftDLL=Resources\OpenALSoft\%OpenALSoftVersionBranch%\APPDATA\OpenAL\bin\Win32\soft_oal.dll
+			) else (
+			SET OpenALSoftVersion=!OpenALSoftVersionBranch!
+			SET OpenALSoftBranch%=DirectSound
+			SET OpenALSoftDLL=Resources\OpenALSoft\%OpenALSoftVersionBranch%\APPDATA\OpenAL\bin\Win32\soft_oal.dll)
+		goto :InstallOpenALSoft
 EXIT /B 0
 
 
@@ -666,7 +791,7 @@ exit
 
 ::DSOAL failure
 :DSOALFailure
-call :PrintAndLog "[91mDSOAL [1mv%DSOALVersion%[0m installation has failed![0m"
+call :PrintAndLog "[91mDSOAL [1mv%DSOALVersion%[0m installation has failed.[0m"
 call :PrintAndLog "Please run the script again."
 call :ReportLog
 pause
