@@ -1,7 +1,7 @@
 # UniversAL 3D Audio Manager
- Script that automates enabling 3D audio in OpenAL and DirectSound3D games.  
-[OpenAL & DirectSound3D games list](https://airtable.com/shrYxQRtC15KgpEo0/tblNOTdmp5nHXfFGU)  
-[Direct download](https://kutt.it/U3DAMDirectDownload)
+ Script that automates enabling 3D audio in [OpenAL & DirectSound3D games](https://airtable.com/shrYxQRtC15KgpEo0/tblNOTdmp5nHXfFGU).  
+[Direct download](https://kutt.it/U3DAMDirectDownload)  
+[Binaural audio in a nutshell](https://kutt.it/binaural)
 
 # Guide
 To enable 3D audio in [OpenAL games](https://airtable.com/shr1cvMcBqudWtjuP):  
@@ -28,7 +28,7 @@ Then the script will:
 - Fix DirectSound references in the registry.  
 
 # Contact
-For more updates, troubleshooting or contribution, join the discussion at the [3D Game Audio Discord server](https://discord.gg/RhRMbmQ).  
+For more updates, troubleshooting or contribution, join the discussion at the [3D Game Audio Discord server](https://kutt.it/U3DAMChat).  
 
 # Credits:  
 [Creative](https://en.wikipedia.org/wiki/Aureal_Semiconductor#History) - [OpenAL](https://openal.org/)  
