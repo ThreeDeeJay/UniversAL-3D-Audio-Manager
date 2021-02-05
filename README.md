@@ -1,4 +1,6 @@
 # UniversAL 3D Audio Manager
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FThreeDeeJay%2FUniversAL-3D-Audio-Manager.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FThreeDeeJay%2FUniversAL-3D-Audio-Manager?ref=badge_shield)
+
  Script that automates enabling 3D audio in [OpenAL & DirectSound3D games](https://airtable.com/shrYxQRtC15KgpEo0/tblNOTdmp5nHXfFGU).  
 [Direct download](https://kutt.it/U3DAMDirectDownload)  
 [Binaural audio in a nutshell](https://kutt.it/binaural)
@@ -37,3 +39,7 @@ For more updates, troubleshooting or contribution, join the discussion at the [3
 [dbohdan](https://github.com/dbohdan) - [initool](https://github.com/dbohdan/initool)  
 [Nirsoft](https://www.nirsoft.net/) - [SoundVolumeView](https://www.nirsoft.net/utils/sound_volume_view.html)  
 [Soepy](https://sourceforge.net/u/soepy/) - [Find And Replace Text](https://sourceforge.net/projects/fart-it/)  
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FThreeDeeJay%2FUniversAL-3D-Audio-Manager.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2FThreeDeeJay%2FUniversAL-3D-Audio-Manager?ref=badge_large)
